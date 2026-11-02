@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PillScan AI — Deteksi Kualitas Obat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#02040a;--s1:#060912;--s2:#0b0f1e;--s3:#111829;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);
+  --green:#00f5a0;--green2:#00c97e;--green-glow:rgba(0,245,160,.15);
+  --red:#ff4d6d;--blue:#4d9fff;--yellow:#ffd166;--purple:#c77dff;
+  --text:#f0f4ff;--muted:rgba(240,244,255,.4);--muted2:rgba(240,244,255,.6);
+  --font-h:'Plus Jakarta Sans',sans-serif;--font-b:'Geist','Plus Jakarta Sans',sans-serif;
+  --r:20px;--r-sm:12px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);overflow-x:hidden;font-size:16px;line-height:1.6;}
+
+/* PAGE TRANSITION */
+.page-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;}
+.pt-curtain{position:absolute;inset:0;background:var(--green);transform:translateY(100%);transform-origin:bottom;}
+.pt-curtain2{position:absolute;inset:0;background:var(--bg);transform:translateY(100%);transform-origin:bottom;}
+
+/* NOISE TEXTURE */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity:0.025;mix-blend-mode:overlay;}
+
+/* GRADIENT ORBS */
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);opacity:.45;}
+.orb1{width:600px;height:600px;background:radial-gradient(circle,rgba(0,245,160,.2),transparent 70%);top:-200px;left:-100px;}
+.orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(77,159,255,.15),transparent 70%);bottom:-100px;right:-100px;}
+.orb3{width:400px;height:400px;background:radial-gradient(circle,rgba(199,125,255,.12),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);}
+
+/* GRID LINES */
+.grid-lines{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:80px 80px;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.2rem 3rem;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(2,4,10,.6);backdrop-filter:blur(30px) saturate(1.5);
+  border-bottom:1px solid var(--border);}
+.nav-logo{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:#fff;
+  text-decoration:none;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem;}
+.nav-logo-pill{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));
+  display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-logo em{color:var(--green);font-style:normal;}
+.nav-center{display:flex;gap:2rem;list-style:none;}
+.nav-center a{color:var(--muted2);text-decoration:none;font-size:.875rem;font-weight:400;
+  transition:color .2s;letter-spacing:.01em;}
+.nav-center a:hover{color:#fff;}
+.nav-right{display:flex;align-items:center;gap:1rem;}
+.nav-pill-tag{background:rgba(0,245,160,.1);border:1px solid rgba(0,245,160,.25);
+  color:var(--green);font-size:.72rem;font-weight:600;padding:.3rem .8rem;
+  border-radius:100px;letter-spacing:.06em;text-transform:uppercase;}
+.nav-cta{background:var(--green);color:#020f07;font-family:var(--font-h);
+  font-weight:700;font-size:.82rem;padding:.55rem 1.4rem;border-radius:100px;
+  text-decoration:none;transition:all .25s;letter-spacing:.01em;white-space:nowrap;}
+.nav-cta:hover{background:#fff;box-shadow:0 0 30px rgba(0,245,160,.4);}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:.3s;}
+@media(max-width:900px){nav{padding:1rem 1.5rem;}.nav-center,.nav-pill-tag{display:none;}.hamburger{display:flex;}}
+.mobile-menu{display:none;position:fixed;top:69px;left:0;right:0;z-index:99;
+  background:rgba(6,9,18,.95);backdrop-filter:blur(30px);
+  border-bottom:1px solid var(--border);padding:1.5rem;}
+.mobile-menu.open{display:block;}
+.mobile-menu a{display:block;padding:.75rem 0;color:var(--muted2);text-decoration:none;
+  font-size:.95rem;border-bottom:1px solid var(--border);transition:.2s;}
+.mobile-menu a:hover{color:var(--green);}
+.mobile-menu a:last-child{border:none;}
+
+/* HERO */
+.hero{position:relative;z-index:1;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:8rem 2rem 5rem;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.6rem;
+  background:rgba(0,245,160,.07);border:1px solid rgba(0,245,160,.2);
+  border-radius:100px;padding:.4rem 1.2rem;margin-bottom:2rem;
+  font-size:.75rem;color:var(--green);font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  animation:fadeUp .6s ease both;}
+.hero-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.5)}}
+
+.hero h1{font-family:var(--font-h);font-size:clamp(2.2rem,4vw,3.8rem);
+  font-weight:800;line-height:1.05;letter-spacing:-.025em;color:#fff;
+  margin-bottom:1.5rem;animation:fadeUp .7s .1s ease both;}
+.hero h1 .line2{display:block;
+  background:linear-gradient(135deg,var(--green) 0%,var(--blue) 50%,var(--purple) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:1.05rem;color:var(--muted2);line-height:1.8;
+  max-width:560px;margin:0 auto 2.5rem;font-weight:300;
+  animation:fadeUp .7s .2s ease both;}
+.hero-sub strong{color:#fff;font-weight:500;}
+.hero-ctas{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;
+  animation:fadeUp .7s .3s ease both;}
+.btn-primary{background:var(--green);color:#010c05;font-family:var(--font-h);
+  font-weight:700;font-size:.9rem;padding:.85rem 2rem;border-radius:100px;
+  text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+  transition:all .3s;letter-spacing:.01em;position:relative;overflow:hidden;}
+.btn-primary::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  transform:translateX(-100%);transition:.5s;}
+.btn-primary:hover::before{transform:translateX(100%);}
+.btn-primary:hover{box-shadow:0 0 40px rgba(0,245,160,.4);transform:translateY(-2px);}
+.btn-sec{background:rgba(255,255,255,.05);color:var(--text);font-family:var(--font-h);
+  font-weight:600;font-size:.9rem;padding:.85rem 2rem;border-radius:100px;
+  border:1px solid var(--border2);text-decoration:none;
+  display:inline-flex;align-items:center;gap:.5rem;transition:all .3s;}
+.btn-sec:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);transform:translateY(-2px);}
+
+.hero-metrics{display:flex;justify-content:center;gap:3rem;margin-top:5rem;flex-wrap:wrap;
+  animation:fadeUp .7s .45s ease both;}
+.hero-metric{text-align:center;}
+.hero-metric-val{font-family:var(--font-h);font-size:2rem;font-weight:800;color:#fff;
+  letter-spacing:-.03em;display:block;}
+.hero-metric-val em{color:var(--green);font-style:normal;}
+.hero-metric-lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem;}
+.hero-metric-sep{width:1px;height:50px;background:var(--border);align-self:center;}
+@media(max-width:640px){.hero-metric-sep{display:none;}.hero-metrics{gap:2rem;}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+
+/* TICKER */
+.ticker-wrap{position:relative;z-index:1;overflow:hidden;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:.6rem 0;background:rgba(0,245,160,.03);}
+.ticker{display:flex;gap:3rem;white-space:nowrap;animation:ticker 20s linear infinite;}
+.ticker-item{font-size:.78rem;color:var(--muted);font-family:var(--font-h);
+  font-weight:600;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:1rem;}
+.ticker-item::after{content:'✦';color:var(--green);font-size:.6rem;}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* SECTIONS */
+section{position:relative;z-index:1;padding:6rem 2rem;}
+.section-inner{max-width:1100px;margin:0 auto;}
+.section-tag{display:inline-flex;align-items:center;gap:.4rem;
+  font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--green);font-weight:700;margin-bottom:.8rem;}
+.section-title{font-family:var(--font-h);font-size:clamp(1.7rem,2.8vw,2.4rem);
+  font-weight:800;letter-spacing:-.025em;color:#fff;margin-bottom:.8rem;line-height:1.1;}
+.section-sub{font-size:.95rem;color:var(--muted2);max-width:500px;line-height:1.8;font-weight:300;}
+
+/* CLASSES */
+.classes-section{background:linear-gradient(180deg,transparent,var(--s1) 20%,var(--s1) 80%,transparent);}
+.class-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;margin-top:2.5rem;max-width:700px;}
+@media(max-width:640px){.class-cards{grid-template-columns:1fr;}}
+.class-card{position:relative;background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r);padding:2rem;overflow:hidden;transition:all .4s cubic-bezier(.23,1,.32,1);cursor:default;}
+.class-card::before{content:'';position:absolute;inset:0;opacity:0;transition:.4s;
+  background:var(--cc-glow,rgba(0,245,160,.05));}
+.class-card:hover::before{opacity:1;}
+.class-card:hover{transform:translateY(-6px);border-color:var(--cc-border,rgba(0,245,160,.35));
+  box-shadow:0 20px 60px var(--cc-shadow,rgba(0,245,160,.1));}
+.cc-dot{width:14px;height:14px;border-radius:50%;margin-bottom:1rem;
+  box-shadow:0 0 20px currentColor;transition:.4s;}
+.class-card:hover .cc-dot{transform:scale(1.4);}
+.cc-name{font-family:var(--font-h);font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:.4rem;}
+.cc-desc{font-size:.85rem;color:var(--muted2);line-height:1.7;}
+.cc-badge{display:inline-flex;align-items:center;gap:.4rem;margin-top:1rem;
+  font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.3rem .8rem;border-radius:100px;border:1px solid;}
+
+/* FEATURE BENTO */
+.bento-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto;gap:1rem;margin-top:2.5rem;}
+@media(max-width:900px){.bento-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.bento-grid{grid-template-columns:minmax(0,1fr);}.bento-card.span2{grid-column:auto;}}
+.bento-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);
+  padding:1.8rem;position:relative;overflow:hidden;
+  transition:all .4s cubic-bezier(.23,1,.32,1);cursor:default;}
+.bento-card.span2{grid-column:span 2;}
+.bento-card:hover{transform:translateY(-4px);border-color:rgba(0,245,160,.2);
+  box-shadow:0 20px 60px rgba(0,245,160,.07);}
+.bento-icon{font-size:1.8rem;margin-bottom:1rem;}
+.bento-title{font-family:var(--font-h);font-size:.95rem;font-weight:700;color:#fff;margin-bottom:.4rem;}
+.bento-desc{font-size:.82rem;color:var(--muted2);line-height:1.7;}
+.bento-accent{position:absolute;bottom:0;right:0;width:100px;height:100px;
+  background:radial-gradient(circle at 100% 100%,rgba(0,245,160,.1),transparent 70%);
+  pointer-events:none;}
+/* special bento - model stats */
+.bento-stat-row{display:flex;gap:1.2rem;margin-top:1.2rem;flex-wrap:wrap;}
+.bento-stat{flex:1;min-width:80px;}
+.bento-stat-val{font-family:var(--font-h);font-size:1.5rem;font-weight:800;color:var(--green);letter-spacing:-.02em;}
+.bento-stat-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:.2rem;}
+
+/* HOW */
+.how-section{background:linear-gradient(180deg,transparent,var(--s1) 20%,var(--s1) 80%,transparent);}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;position:relative;}
+@media(max-width:700px){.steps{grid-template-columns:1fr;}}
+.steps::before{content:'';position:absolute;top:36px;left:calc(16.66% + 20px);right:calc(16.66% + 20px);
+  height:1px;background:linear-gradient(90deg,var(--green),var(--blue),var(--purple));
+  opacity:.3;}
+@media(max-width:700px){.steps::before{display:none;}}
+.step{text-align:center;padding:2rem 1.5rem;}
+.step-num{width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(0,245,160,.15),rgba(77,159,255,.1));
+  border:1px solid rgba(0,245,160,.2);
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+  margin:0 auto 1.2rem;transition:.3s;}
+.step:hover .step-num{background:linear-gradient(135deg,rgba(0,245,160,.25),rgba(77,159,255,.2));
+  box-shadow:0 0 30px rgba(0,245,160,.2);}
+.step-tag{font-size:.65rem;text-transform:uppercase;letter-spacing:.15em;color:var(--green);
+  font-weight:700;margin-bottom:.4rem;}
+.step-title{font-family:var(--font-h);font-size:1rem;font-weight:700;color:#fff;margin-bottom:.5rem;}
+.step-desc{font-size:.83rem;color:var(--muted2);line-height:1.7;}
+
+/* CTA */
+.cta-section{text-align:center;}
+.cta-inner{max-width:700px;margin:0 auto;
+  background:linear-gradient(135deg,rgba(0,245,160,.05),rgba(77,159,255,.05));
+  border:1px solid rgba(255,255,255,.08);border-radius:28px;
+  padding:5rem 3rem;position:relative;overflow:hidden;}
+.cta-glow{position:absolute;width:400px;height:400px;
+  background:radial-gradient(circle,rgba(0,245,160,.1),transparent 65%);
+  top:-200px;left:50%;transform:translateX(-50%);pointer-events:none;}
+.cta-inner h2{font-family:var(--font-h);font-size:clamp(1.6rem,2.5vw,2.2rem);
+  font-weight:800;letter-spacing:-.025em;color:#fff;margin-bottom:.8rem;}
+.cta-inner p{color:var(--muted2);font-size:.95rem;line-height:1.8;
+  margin-bottom:2.5rem;max-width:440px;margin-left:auto;margin-right:auto;}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+/* FOOTER */
+footer{position:relative;z-index:1;
+  border-top:1px solid var(--border);padding:4rem 2rem 2rem;background:var(--s1);}
+.footer-inner{max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:2.5fr 1fr 1fr;gap:4rem;margin-bottom:3rem;}
+@media(max-width:700px){.footer-inner{grid-template-columns:1fr;gap:2rem;}footer{padding:3rem 1.5rem 2rem;}}
+.footer-brand{font-family:var(--font-h);font-size:1.3rem;font-weight:800;
+  color:#fff;letter-spacing:-.03em;margin-bottom:.6rem;
+  background:linear-gradient(90deg,#fff,var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.footer-desc{font-size:.85rem;color:var(--muted);line-height:1.7;max-width:280px;}
+.footer-heading{font-family:var(--font-h);font-size:.75rem;font-weight:700;color:#fff;
+  text-transform:uppercase;letter-spacing:.12em;margin-bottom:1rem;}
+.footer-links{list-style:none;display:flex;flex-direction:column;gap:.6rem;}
+.footer-links a{color:var(--muted2);text-decoration:none;font-size:.85rem;transition:.2s;}
+.footer-links a:hover{color:var(--green);}
+.footer-bottom{max-width:1100px;margin:0 auto;
+  padding-top:1.5rem;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+.footer-copy{font-size:.78rem;color:var(--muted);}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.visible{opacity:1;transform:none;}
+</style>
+<link rel="stylesheet" href="theme.css"/>
+
+<style id="pillscan-mobile-card-fix">
+@media screen and (max-width:560px){
+ .bento-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;gap:1rem!important;width:100%!important;}
+ .bento-grid>.bento-card,.bento-grid>.bento-card.span2{grid-column:1/-1!important;grid-row:auto!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;transform:none;}
+ .bento-card{box-sizing:border-box!important;padding:1.25rem!important;overflow-wrap:anywhere;}
+ .bento-card .bento-title,.bento-card .bento-desc{min-width:0;overflow-wrap:anywhere;}
+}
+</style>
+
+</head>
+<body>
+
+<!-- BG EFFECTS -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="grid-lines"></div>
+
+<!-- PAGE TRANSITION -->
+<div class="page-transition" id="pageTransition">
+  <div class="pt-curtain" id="ptCurtain"></div>
+  <div class="pt-curtain2" id="ptCurtain2"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg class="logo-mark" viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><path d="M4 12V7a3 3 0 0 1 3-3h5M24 4h5a3 3 0 0 1 3 3v5M32 24v5a3 3 0 0 1-3 3h-5M12 32H7a3 3 0 0 1-3-3v-5" fill="none" stroke="#2f7bff" stroke-width="2.4" stroke-linecap="round"/><g class="logo-caps" transform="rotate(-45 18 18)"><rect x="8" y="12.5" width="20" height="11" rx="5.5" fill="#fff" stroke="#2f7bff" stroke-width="2"/><path d="M18 12.5h-4.5a5.5 5.5 0 0 0 0 11H18z" fill="#2f7bff"/></g></svg><span class="wm">Pill<b>Scan</b></span>
+  </a>
+  <ul class="nav-center">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="upload.html">Upload Gambar</a></li>
+    <li><a href="camera.html">Kamera Deteksi</a></li>
+    <li><a href="#contact">Kontak</a></li>
+  </ul>
+  <div class="nav-right">
+    <span class="nav-pill-tag">YOLO11n</span>
+    <a href="upload.html" class="nav-cta" data-transition>Coba Sekarang</a>
+  </div>
+  <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">🏠 Home</a>
+  <a href="upload.html" data-transition>📷 Upload Gambar</a>
+  <a href="camera.html" data-transition>🎥 Kamera Deteksi</a>
+  <a href="#contact">📬 Kontak</a>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow"><div class="hero-dot"></div> AI-Powered Quality Control</div>
+  <h1>Deteksi Kualitas Obat<br/><span class="line2">Berbasis Kecerdasan Buatan</span></h1>
+  <p class="hero-sub">Sistem inspeksi QC otomatis menggunakan <strong>YOLO11n</strong> via Roboflow API — mendeteksi obat bagus & rusak dalam hitungan detik.</p>
+  <div class="hero-ctas">
+    <a href="upload.html" class="btn-primary" data-transition>📷 Upload Gambar</a>
+    <a href="camera.html" class="btn-sec" data-transition>🎥 Live Camera</a>
+  </div>
+  <div class="hero-metrics">
+    <div class="hero-metric">
+      <span class="hero-metric-val"><em>98.1</em>%</span>
+      <div class="hero-metric-lbl">mAP@50</div>
+    </div>
+    <div class="hero-metric-sep"></div>
+    <div class="hero-metric">
+      <span class="hero-metric-val"><em>97.6</em>%</span>
+      <div class="hero-metric-lbl">Precision</div>
+    </div>
+    <div class="hero-metric-sep"></div>
+    <div class="hero-metric">
+      <span class="hero-metric-val"><em>98.4</em>%</span>
+      <div class="hero-metric-lbl">Recall</div>
+    </div>
+    <div class="hero-metric-sep"></div>
+    <div class="hero-metric">
+      <span class="hero-metric-val"><em>98.0</em>%</span>
+      <div class="hero-metric-lbl">F1 Score</div>
+    </div>
+  </div>
+<div class="stage" aria-label="Contoh animasi deteksi pil">
+  <div class="stage-hud"><span class="hud-live"></span>Live demo · YOLO11n</div>
+  <div class="stage-count">6 objek terdeteksi</div>
+  <div class="stage-beam"></div>
+  <div class="item" style="left:9%;top:30%;--d:0.84s;--f:1.0s"><div class="pillw"><div class="round"></div></div><div class="bbox"><i></i><b>obat_bagus 97%</b></div></div>
+  <div class="item" style="left:24%;top:58%;--d:1.74s;--f:1.0s"><div class="pillw"><div class="caps"></div></div><div class="bbox"><i></i><b>obat_bagus 95%</b></div></div>
+  <div class="item" style="left:41%;top:22%;--d:2.76s;--f:1.8s"><div class="pillw"><div class="round"></div></div><div class="bbox"><i></i><b>obat_bagus 98%</b></div></div>
+  <div class="item" style="left:56%;top:56%;--d:3.66s;--f:1.8s"><div class="pillw"><div class="round crack"></div></div><div class="bbox is-bad"><i></i><b>obat_rusak 91%</b></div></div>
+  <div class="item" style="left:72%;top:28%;--d:4.62s;--f:1.0s"><div class="pillw"><div class="round"></div></div><div class="bbox"><i></i><b>obat_bagus 96%</b></div></div>
+  <div class="item" style="left:86%;top:60%;--d:5.46s;--f:1.8s"><div class="pillw"><div class="caps"></div></div><div class="bbox"><i></i><b>obat_bagus 94%</b></div></div>
+</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ticker-item">PillScan AI</span>
+    <span class="ticker-item">YOLO11n Detection</span>
+    <span class="ticker-item">Quality Control</span>
+    <span class="ticker-item">obat_bagus</span>
+    <span class="ticker-item">obat_rusak</span>
+    <span class="ticker-item">mAP@50: 98.1%</span>
+    <span class="ticker-item">Confidence: 85%+</span>
+    <span class="ticker-item">Real-Time Detection</span>
+    <span class="ticker-item">PillScan AI</span>
+    <span class="ticker-item">YOLO11n Detection</span>
+    <span class="ticker-item">Quality Control</span>
+    <span class="ticker-item">obat_bagus</span>
+    <span class="ticker-item">obat_rusak</span>
+    <span class="ticker-item">mAP@50: 98.1%</span>
+    <span class="ticker-item">Confidence: 85%+</span>
+    <span class="ticker-item">Real-Time Detection</span>
+  </div>
+</div>
+
+<!-- KELAS DETEKSI -->
+<section class="classes-section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">🧬 Kelas Deteksi</div>
+      <h2 class="section-title">Apa yang Dapat Dideteksi?</h2>
+      <p class="section-sub">Model dilatih untuk mengklasifikasikan 2 kondisi obat dengan confidence minimum 85%.</p>
+    </div>
+    <div class="class-cards reveal">
+      <div class="class-card" style="--cc-glow:rgba(0,245,160,.06);--cc-border:rgba(0,245,160,.35);--cc-shadow:rgba(0,245,160,.12);">
+        <div class="cc-dot" style="background:#00f5a0;color:#00f5a0;"></div>
+        <div class="cc-name">obat_bagus</div>
+        <div class="cc-desc">Obat dalam kondisi sempurna — utuh, tidak cacat, tidak retak. Memenuhi semua standar Quality Control dan siap untuk distribusi ke konsumen.</div>
+        <div class="cc-badge" style="color:#00f5a0;border-color:rgba(0,245,160,.3);background:rgba(0,245,160,.08);">✅ Lolos QC</div>
+      </div>
+      <div class="class-card" style="--cc-glow:rgba(255,77,109,.06);--cc-border:rgba(255,77,109,.35);--cc-shadow:rgba(255,77,109,.12);">
+        <div class="cc-dot" style="background:#ff4d6d;color:#ff4d6d;"></div>
+        <div class="cc-name">obat_rusak</div>
+        <div class="cc-desc">Obat mengalami kerusakan fisik — retak, pecah, deformasi, atau cacat lainnya. Tidak memenuhi standar QC dan harus dipisahkan dari batch produksi.</div>
+        <div class="cc-badge" style="color:#ff4d6d;border-color:rgba(255,77,109,.3);background:rgba(255,77,109,.08);">❌ Reject</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES BENTO -->
+<section>
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">✨ Keunggulan</div>
+      <h2 class="section-title">Kenapa PillScan AI?</h2>
+      <p class="section-sub">Platform inspeksi kualitas obat paling canggih dengan teknologi YOLO11n terbaru.</p>
+    </div>
+    <div class="bento-grid reveal">
+      <div class="bento-card span2">
+        <div class="bento-accent"></div>
+        <div class="bento-icon">🎯</div>
+        <div class="bento-title">Akurasi Model Terbukti</div>
+        <div class="bento-desc">Model YOLO11n dilatih khusus pada dataset obat Indonesia dengan hasil benchmark yang konsisten tinggi di semua metrik evaluasi.</div>
+        <div class="bento-stat-row">
+          <div class="bento-stat"><div class="bento-stat-val">98.1%</div><div class="bento-stat-lbl">mAP@50</div></div>
+          <div class="bento-stat"><div class="bento-stat-val">97.6%</div><div class="bento-stat-lbl">Precision</div></div>
+          <div class="bento-stat"><div class="bento-stat-val">98.0%</div><div class="bento-stat-lbl">F1 Score</div></div>
+        </div>
+      </div>
+      <div class="bento-card">
+        <div class="bento-icon">⚡</div>
+        <div class="bento-title">Analisis Instan</div>
+        <div class="bento-desc">Deteksi selesai dalam &lt;2 detik berkat arsitektur Nano yang ultra-efisien.</div>
+      </div>
+      <div class="bento-card">
+        <div class="bento-icon">🎥</div>
+        <div class="bento-title">Real-Time Camera</div>
+        <div class="bento-desc">Bounding box live langsung di layar via kamera smartphone atau laptop.</div>
+      </div>
+      <div class="bento-card">
+        <div class="bento-icon">🌐</div>
+        <div class="bento-title">Berbasis Web</div>
+        <div class="bento-desc">Tidak perlu install apapun. Langsung pakai dari browser di perangkat apapun.</div>
+      </div>
+      <div class="bento-card">
+        <div class="bento-icon">💚</div>
+        <div class="bento-title">100% Gratis</div>
+        <div class="bento-desc">Tidak ada biaya tersembunyi, tidak perlu buat akun. Open access untuk semua.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="how-section">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center;">
+      <div class="section-tag">⚙️ Cara Kerja</div>
+      <h2 class="section-title">Tiga Langkah Mudah</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg></div>
+        <div class="step-tag">Langkah 01</div>
+        <div class="step-title">Upload atau Kamera</div>
+        <div class="step-desc">Upload foto obat dari galeri atau aktifkan kamera real-time langsung di browser.</div>
+      </div>
+      <div class="step">
+        <div class="step-num"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></svg></div>
+        <div class="step-tag">Langkah 02</div>
+        <div class="step-title">AI Memproses</div>
+        <div class="step-desc">YOLO11n menganalisis gambar dan mengidentifikasi kondisi obat beserta confidence score.</div>
+      </div>
+      <div class="step">
+        <div class="step-num"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4.5V3h6v1.5M8.5 13l2.4 2.4 4.6-4.8"/></svg></div>
+        <div class="step-tag">Langkah 03</div>
+        <div class="step-title">Hasil & Status QC</div>
+        <div class="step-desc">Dapatkan status LULUS/REJECT, bounding box visual, dan rekomendasi tindakan instan.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-inner">
+    <div class="cta-inner reveal">
+      <div class="cta-glow"></div>
+      <h2>Siap Mendeteksi Sekarang?</h2>
+      <p>Tidak perlu mendaftar. Langsung upload foto atau aktifkan kamera untuk inspeksi kualitas obat secara instan.</p>
+      <div class="cta-btns">
+        <a href="upload.html" class="btn-primary" data-transition>📷 Upload Gambar</a>
+        <a href="camera.html" class="btn-sec" data-transition>🎥 Buka Kamera</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+
+<section id="kfaSearchSection" style="position:relative;z-index:2;padding:2.5rem 1.5rem;max-width:1100px;margin:0 auto;">
+  <div style="background:rgba(11,15,30,.92);border:1px solid rgba(0,245,160,.22);border-radius:20px;padding:clamp(1.2rem,3vw,2rem);">
+    <div style="color:#00f5a0;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.45rem">DATABASE OBAT · SATUSEHAT KFA</div>
+    <h2 style="font-size:clamp(1.25rem,3vw,1.8rem);color:#fff;margin:0 0 .5rem">Cari informasi obat</h2>
+    <p style="color:rgba(240,244,255,.65);font-size:.9rem;line-height:1.7;margin-bottom:1rem">Cari berdasarkan nama obat, misalnya Paracetamol, Paramex, atau nama zat aktif. Hasil ini membantu pencocokan nama—bukan identifikasi pasti obat dari foto.</p>
+    <form id="kfaSearchForm" style="display:flex;gap:.65rem;flex-wrap:wrap">
+      <input id="kfaKeyword" type="search" maxlength="120" placeholder="Ketik nama obat…" aria-label="Nama obat yang dicari" style="flex:1;min-width:190px;background:#0b0f1e;border:1px solid rgba(255,255,255,.15);border-radius:100px;padding:.8rem 1rem;color:#f0f4ff;font:inherit;outline-color:#00f5a0" />
+      <button id="kfaSearchBtn" type="submit" style="background:#00f5a0;color:#010c05;border:0;border-radius:100px;padding:.8rem 1.35rem;font-weight:800;cursor:pointer">Cari Obat</button>
+    </form>
+    <div id="kfaSearchStatus" role="status" aria-live="polite" style="display:none;color:rgba(240,244,255,.7);font-size:.85rem;margin-top:1rem"></div>
+    <div id="kfaSearchResults" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:.8rem;margin-top:1rem"></div>
+    <p style="color:#ffd166;font-size:.76rem;line-height:1.6;margin-top:1rem">Penting: data katalog tidak membuktikan keaslian, kondisi, atau dosis obat pada gambar. Periksa kemasan/leaflet dan konsultasikan dengan apoteker.</p>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">PillScan AI</div>
+      <p class="footer-desc">Project Machine Learning Deteksi Kualitas Obat menggunakan YOLO11n via Roboflow API. Dikembangkan untuk kebutuhan Quality Control industri farmasi.</p>
+    </div>
+    <div>
+      <div class="footer-heading">Navigasi</div>
+      <ul class="footer-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="upload.html">Upload Gambar</a></li>
+        <li><a href="camera.html">Camera Detection</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-heading">Kontak</div>
+      <ul class="footer-links">
+        <li><a href="#">📧 pillscan@example.com</a></li>
+        <li><a href="#">🌐 Universitas Anda</a></li>
+        <li><a href="#">📍 Indonesia</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 Team PillScan AI. All rights reserved.</span>
+    <span class="footer-copy">Powered by YOLO11n + Roboflow API</span>
+  </div>
+</footer>
+
+<script>
+// ── MENU ──
+function toggleMenu(){ document.getElementById('mobileMenu').classList.toggle('open'); }
+
+// ── PAGE TRANSITION (out) ──
+function doTransition(href){
+  const c = document.getElementById('ptCurtain');
+  const c2 = document.getElementById('ptCurtain2');
+  c.style.transition='transform .45s cubic-bezier(.77,0,.18,1)';
+  c.style.transform='translateY(0)';
+  setTimeout(()=>{
+    c2.style.transition='transform .4s .12s cubic-bezier(.77,0,.18,1)';
+    c2.style.transform='translateY(0)';
+  },50);
+  setTimeout(()=>{ window.location.href=href; },600);
+}
+
+// ── TRANSITION IN on load ──
+(function(){
+  const c=document.getElementById('ptCurtain');
+  const c2=document.getElementById('ptCurtain2');
+  // start with curtains covering screen
+  c.style.transform='translateY(0)'; c.style.transition='none';
+  c2.style.transform='translateY(0)'; c2.style.transition='none';
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      // slide up to reveal
+      c2.style.transition='transform .5s cubic-bezier(.77,0,.18,1)';
+      c2.style.transform='translateY(-100%)';
+      setTimeout(()=>{
+        c.style.transition='transform .5s .1s cubic-bezier(.77,0,.18,1)';
+        c.style.transform='translateY(-100%)';
+      },80);
+    });
+  });
+})();
+
+// ── ATTACH TRANSITIONS ──
+document.querySelectorAll('[data-transition]').forEach(el=>{
+  el.addEventListener('click',e=>{
+    const href=el.getAttribute('href');
+    if(href&&href!='#'&&!href.startsWith('http')){
+      e.preventDefault(); doTransition(href);
+    }
+  });
+});
+
+// ── SCROLL REVEAL ──
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ── CANVAS PARTICLE BG ──
+(function(){
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.6';
+  document.body.prepend(canvas);
+  const ctx=canvas.getContext('2d');
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+  const N=60;
+  const pts=Array.from({length:N},()=>({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+    vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+    r:Math.random()*1.5+.5,
+    color:['#00f5a0','#4d9fff','#c77dff','#ffd166'][Math.floor(Math.random()*4)]
+  }));
+  function frame(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0;
+      if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.color;ctx.globalAlpha=.35;ctx.fill();ctx.globalAlpha=1;
+    });
+    // draw connecting lines
+    for(let i=0;i<N;i++){
+      for(let j=i+1;j<N;j++){
+        const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){
+          ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle='rgba(0,245,160,'+(0.04*(1-d/120))+')';ctx.lineWidth=.6;ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+// ── BENTO SPOTLIGHT ──
+document.querySelectorAll('.bento-card,.class-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');
+    card.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');
+  });
+});
+
+// ── SATUSEHAT KFA SEARCH ──
+(function initKfaSearch(){
+  const form=document.getElementById('kfaSearchForm');
+  if(!form) return;
+  const input=document.getElementById('kfaKeyword');
+  const button=document.getElementById('kfaSearchBtn');
+  const status=document.getElementById('kfaSearchStatus');
+  const results=document.getElementById('kfaSearchResults');
+  const esc=(v)=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const first=(...values)=>values.find(v=>v!==undefined&&v!==null&&String(v).trim()!=='')||'—';
+  form.addEventListener('submit',async(e)=>{
+    e.preventDefault();
+    const keyword=input.value.trim();
+    if(!keyword){status.style.display='block';status.textContent='Masukkan nama obat terlebih dahulu.';return;}
+    button.disabled=true;button.textContent='Mencari…';status.style.display='block';status.textContent='Menghubungi database KFA…';results.innerHTML='';
+    try{
+      const response=await fetch('/api/kfa/search?keyword='+encodeURIComponent(keyword),{headers:{'Accept':'application/json'}});
+      const payload=await response.json();
+      if(!response.ok) throw new Error(payload.error||payload.message||('Permintaan gagal ('+response.status+')'));
+      // Respons KFA dibungkus server sebagai payload.data, lalu produk berada di payload.data.items.data.
+      const source=payload?.data;
+      let rows=Array.isArray(payload)?payload:
+        Array.isArray(source?.items?.data)?source.items.data:
+        Array.isArray(source?.items)?source.items:
+        Array.isArray(source?.data)?source.data:
+        Array.isArray(source?.results)?source.results:
+        Array.isArray(payload?.results)?payload.results:
+        Array.isArray(payload?.items)?payload.items:
+        Array.isArray(payload?.products)?payload.products:[];
+      rows=rows.slice().sort((a,b)=>Number(Boolean(b.active))-Number(Boolean(a.active)));
+      if(!rows.length){status.textContent='Tidak ada hasil untuk “'+keyword+'”. Coba nama zat aktif atau ejaan lain.';return;}
+      const total=source?.total??source?.items?.total??payload.total??rows.length;
+      status.textContent='Ditemukan '+total+' data katalog. Menampilkan '+Math.min(rows.length,12)+' hasil teratas.';
+      results.innerHTML=rows.slice(0,12).map(item=>{
+        const name=first(item.name,item.product_name,item.display_name,item.nama_dagang,item.nama,item.term,item.medicine_name,item.product_template?.display_name,item.product_template?.name);
+        const kfa=first(item.kfa_code,item.kfaId,item.id,item.code,item.identifier);
+        const formName=first(item.dosage_form?.name,item.dosage_form,item.dosageForm?.name,item.dosageForm,item.form,item.bentuk_sediaan,item.uom?.name);
+        const ingredients=Array.isArray(item.active_ingredients)?item.active_ingredients.map(x=>typeof x==='string'?x:[first(x.zat_aktif,x.name,x.ingredient,x.substance),x.kekuatan_zat_aktif].filter(v=>v&&v!=='—').join(' ')).join(', '):first(item.active_ingredients,item.active_ingredient,item.activeIngredient,item.zat_aktif);
+        const manufacturer=first(item.manufacturer,item.manufacturer_name,item.manufaktur,item.registrar);
+        const active=item.active===true||String(item.active).toLowerCase()==='true'||String(item.state||'').toLowerCase()==='valid'||String(item.state||'').toLowerCase()==='active';
+        return `<article style="background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);border-radius:13px;padding:1rem;min-width:0"><div style="display:flex;gap:.5rem;align-items:flex-start;justify-content:space-between"><strong style="color:#fff;font-size:.9rem;line-height:1.5">${esc(name)}</strong><span style="white-space:nowrap;font-size:.65rem;padding:.2rem .5rem;border-radius:20px;background:${active?'rgba(0,245,160,.12)':'rgba(255,209,102,.1)'};color:${active?'#00f5a0':'#ffd166'}">${active?'Aktif':'Periksa status'}</span></div><div style="font-size:.76rem;color:rgba(240,244,255,.65);line-height:1.7;margin-top:.65rem"><div><b>Kode KFA:</b> ${esc(kfa)}</div><div><b>Bentuk:</b> ${esc(formName)}</div><div><b>Zat aktif:</b> ${esc(ingredients)}</div><div><b>Produsen:</b> ${esc(manufacturer)}</div></div></article>`;
+      }).join('');
+    }catch(err){status.textContent='Pencarian KFA gagal: '+err.message+'. Pastikan server Node.js berjalan dan endpoint /api/kfa/search tersedia.';}
+    finally{button.disabled=false;button.textContent='Cari Obat';}
+  });
+})();
+
+</script>
+
+<section id="autoKfaOcrPanel" style="max-width:1100px;margin:1rem auto 2rem;padding:1.2rem;border:1px solid rgba(0,245,160,.35);border-radius:16px;background:#1d2232;color:#f0f4ff;display:none">
+ <div style="color:#00f5a0;font-size:.72rem;font-weight:800;letter-spacing:.08em;margin-bottom:.45rem">PENGENALAN NAMA OBAT · OCR + SATUSEHAT KFA</div>
+ <h3 style="margin:.2rem 0 .6rem;font-size:1.15rem">Hasil pencocokan otomatis</h3>
+ <p id="autoKfaOcrStatus" role="status" aria-live="polite" style="color:#c4cad8;font-size:.88rem">Menunggu deteksi obat…</p>
+ <details style="margin:.5rem 0"><summary style="cursor:pointer;color:#aeb8ce;font-size:.78rem">Lihat teks OCR mentah (opsional)</summary><div id="autoKfaOcrText" style="font-size:.78rem;color:#aeb8ce;white-space:pre-wrap;overflow-wrap:anywhere;max-height:130px;overflow:auto;margin-top:.5rem;padding:.6rem;background:rgba(0,0,0,.16);border-radius:8px"></div></details>
+ <div id="autoKfaOcrMatches" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:.7rem;margin-top:.8rem"></div>
+ <p style="font-size:.72rem;color:#ffd166;margin:.8rem 0 0">Catatan: OCR membaca tulisan pada gambar, bukan memastikan identitas obat. Cocokkan kemasan, zat aktif, dan kode KFA secara manual. Hasil pencocokan dapat keliru.</p>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+(function(){
+ const panel=document.getElementById('autoKfaOcrPanel'); if(!panel) return;
+ const status=document.getElementById('autoKfaOcrStatus'), textEl=document.getElementById('autoKfaOcrText'), matchesEl=document.getElementById('autoKfaOcrMatches');
+ let busy=false, lastOcrKey='';
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function flatten(payload){
+   let d=payload?.data??payload;
+   if(d?.data!==undefined) d=d.data;
+   if(Array.isArray(d)) return d;
+   if(Array.isArray(d?.items?.data)) return d.items.data;
+   if(Array.isArray(d?.items)) return d.items;
+   if(Array.isArray(d?.results)) return d.results;
+   if(Array.isArray(d?.data?.items?.data)) return d.data.items.data;
+   if(Array.isArray(d?.products)) return d.products;
+   return [];
+ }
+ function nameOf(x){return x?.name||x?.product_name||x?.display_name||x?.nama_produk||x?.nama||x?.name_product||'Nama tidak tersedia';}
+ function codeOf(x){return x?.kfa_code||x?.kfaId||x?.id||x?.code||x?.identifier||'—';}
+ function activeOf(x){return x?.active===true||String(x?.active).toLowerCase()==='true'||String(x?.state||'').toLowerCase()==='active';}
+ function displayValue(v){if(v==null||v==='')return '';if(typeof v==='string'||typeof v==='number')return String(v);if(Array.isArray(v))return v.map(displayValue).filter(Boolean).join(', ');if(typeof v==='object')return String(v.name||v.display_name||v.display||v.text||v.value||v.zat_aktif||v.ingredient_name||'');return String(v);}
+ function ingredientsOf(x){let v=x?.active_ingredients||x?.ingredients||x?.zat_aktif||x?.active_ingredient; if(Array.isArray(v)) return v.map(a=>{if(typeof a==='string')return a;const n=displayValue(a?.zat_aktif||a?.name||a?.ingredient_name||a?.ingredient||a?.substance);const strength=displayValue(a?.kekuatan_zat_aktif||a?.strength||a?.strength_value);return [n,strength].filter(Boolean).join(' ')}).filter(Boolean).join(', '); if(typeof v==='object'&&v) return displayValue(v.zat_aktif||v.name||v.display||v.ingredient_name); return displayValue(v);}
+ function formOf(x){return displayValue(x?.dosage_form?.name||x?.dosage_form||x?.dosageForm?.name||x?.dosageForm||x?.form?.name||x?.form||x?.bentuk_sediaan?.name||x?.bentuk_sediaan||x?.uom?.name)||'Tidak tersedia';}
+ function manufacturerOf(x){return displayValue(x?.manufacturer||x?.manufacturer_name||x?.produced_by||x?.produsen||x?.registrar)||'Tidak tersedia';}
+ function ingredientList(x){const v=x?.active_ingredients||x?.ingredients||x?.zat_aktif||x?.active_ingredient;return Array.isArray(v)?v.map(a=>typeof a==='string'?a:displayValue(a?.zat_aktif||a?.name||a?.ingredient_name||a?.ingredient||a?.substance)).filter(Boolean):v?[displayValue(v.zat_aktif||v.name||v.ingredient_name||v)]:[];}
+ function isSingleIngredientParacetamol500(x){const a=ingredientList(x);const raw=x?.active_ingredients||x?.ingredients;const strength=Array.isArray(raw)&&raw.length===1?displayValue(raw[0]?.kekuatan_zat_aktif||raw[0]?.strength):'';return a.length===1&&/paracetamol|parasetamol/i.test(a[0])&&(/500\s*mg/i.test(strength)||/paracetamol\s*500\s*mg/i.test(nameOf(x)));}
+ function doseInfoHtml(x){if(!isSingleIngredientParacetamol500(x))return '';return `<section style="grid-column:1/-1;padding:1rem;border:1px solid rgba(0,245,160,.35);border-radius:13px;background:rgba(0,245,160,.06)"><strong style="color:#00f5a0">Informasi aturan pakai umum — Parasetamol 500 mg (dewasa)</strong><ul style="margin:.6rem 0;color:#f0f4ff;line-height:1.7;padding-left:1.2rem"><li>Referensi Kemenkes mencantumkan 1 tablet (500 mg), 3–4 kali sehari, dengan jarak 4–6 jam.</li><li>Jangan melebihi petunjuk pada kemasan; Kemenkes mengingatkan agar total parasetamol tidak melebihi 4.000 mg per hari.</li><li>Jangan gunakan panduan dewasa ini untuk anak-anak. Hindari menggabungkan beberapa obat yang sama-sama mengandung parasetamol.</li></ul><div style="font-size:.76rem;color:#aeb8ce">Panduan umum, bukan resep individual. Pastikan produk benar-benar parasetamol tunggal 500 mg dan ikuti label produk. Sumber: <a href="https://ayosehat.kemkes.go.id/pub/files/files38314SKK%20SBH%20Krida%20Obat.pdf" target="_blank" rel="noopener noreferrer" style="color:#00f5a0">Kemenkes RI — Dosis Parasetamol</a> · <a href="https://keslan.kemkes.go.id/view_artikel/2988/yuk-mengenal-parasetamol" target="_blank" rel="noopener noreferrer" style="color:#00f5a0">Panduan keamanan</a></div></section>`;}
+ async function searchKfa(term){
+   const r=await fetch('/api/kfa/search?keyword='+encodeURIComponent(term),{headers:{Accept:'application/json'}});
+   const j=await r.json(); if(!r.ok) throw new Error(j.error||'HTTP '+r.status); return flatten(j);
+ }
+ function candidateTerms(raw){
+   // Prioritaskan nama merek yang terbaca di bagian mana pun; jangan mencari setiap baris OCR yang penuh noise.
+   const text=String(raw||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,' ').toLowerCase();
+   const known=[
+     ['paramex','Paramex'],['bodrex','Bodrex'],['panadol','Panadol'],['procold','Procold'],
+     ['sanmol','Sanmol'],['tempra','Tempra'],['paracetamol','Paracetamol'],['ibuprofen','Ibuprofen'],
+     ['amoxicillin','Amoxicillin'],['cetirizine','Cetirizine'],['antangin','Antangin'],['tolak angin','Tolak Angin']
+   ];
+   const found=known.filter(([needle])=>text.includes(needle)).map(([,label])=>label);
+   if(found.length) return [...new Set(found)].slice(0,2);
+   const lines=String(raw||'').split(/[\r\n]+/).map(s=>s.replace(/[^\p{L}\p{N} +.-]/gu,' ').replace(/\s+/g,' ').trim()).filter(s=>s.length>=5 && s.length<=48);
+   const candidates=[];
+   for(const line of lines){
+     const words=line.split(/\s+/).filter(w=>w.length>=4 && /[A-Za-z]/.test(w) && !/^\d+$/.test(w));
+     if(words.length){const term=words.slice(0,2).join(' ');if(term.length>=5&&!candidates.some(x=>x.toLowerCase()===term.toLowerCase()))candidates.push(term);}
+     if(candidates.length>=2)break;
+   }
+   return candidates;
+ }
+ window.runAutoKfaOCR=async function(imageDataUrl){
+   if(!imageDataUrl||busy||!window.Tesseract){panel.style.display='block';status.textContent=!window.Tesseract?'OCR belum dimuat. Periksa koneksi internet lalu muat ulang halaman.':'OCR sedang berjalan.';return;}
+   const key=imageDataUrl.slice(0,180); if(key===lastOcrKey) return; lastOcrKey=key; busy=true; panel.style.display='block'; matchesEl.innerHTML=''; textEl.textContent='';
+   try{
+     status.textContent='Membaca tulisan pada gambar dengan OCR…';
+     const result=await Tesseract.recognize(imageDataUrl,'eng');
+     const raw=(result?.data?.text||'').trim(); textEl.textContent=raw||'Tidak ada tulisan yang terbaca jelas.';
+     const terms=candidateTerms(raw);
+     if(!terms.length){status.textContent='Tulisan nama obat belum terbaca. Coba foto lebih dekat, terang, dan fokus.';return;}
+     status.textContent='Mencocokkan nama yang paling mungkin: '+terms.join(' · ')+'. Mengabaikan sebagian teks OCR yang berisik.';
+     const all=[];
+     for(const term of terms){try{const items=await searchKfa(term); for(const item of items){const n=nameOf(item);if(n&&n!=='Nama tidak tersedia'&&!all.some(a=>String(codeOf(a))===String(codeOf(item)))) all.push(item);}}catch(e){console.warn('[KFA OCR]',term,e);}}
+     if(!all.length){status.textContent='Teks terbaca, tetapi belum ada kecocokan katalog yang cukup. Gunakan pencarian manual di bagian database KFA.';return;}
+     const normalizedTerms=terms.join(' ').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(Boolean);
+     const score=x=>{const n=nameOf(x).toLowerCase();let v=0;for(const t of normalizedTerms){if(t.length>=4&&n.includes(t))v+=10;}if(activeOf(x))v+=1;return v;};
+     all.sort((a,b)=>score(b)-score(a));
+     const visible=all.filter(x=>score(x)>1).slice(0,6);
+     status.textContent='Ditemukan '+visible.length+' kandidat yang paling relevan dari '+all.length+' hasil katalog. Ini kandidat pencocokan, bukan identifikasi pasti.';
+     const shown=(visible.length?visible:all.slice(0,3));
+     const verifiedDose=shown.find(isSingleIngredientParacetamol500);
+     matchesEl.innerHTML=(verifiedDose?doseInfoHtml(verifiedDose):'')+shown.map(x=>{
+       const name=nameOf(x), code=codeOf(x), ingredients=ingredientsOf(x)||'Tidak tersedia';
+       const form=formOf(x); const maker=manufacturerOf(x);
+       return `<article style="padding:.8rem;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.035);font-size:.8rem"><strong>${esc(name)}</strong><div style="color:#c4cad8;line-height:1.7;margin-top:.45rem">Kode KFA: ${esc(code)}<br>Bentuk: ${esc(form)}<br>Zat aktif: ${esc(ingredients)}<br>Produsen: ${esc(maker)}</div><span style="display:inline-block;margin-top:.4rem;color:${activeOf(x)?'#00f5a0':'#ffd166'}">${activeOf(x)?'Aktif':'Periksa status'}</span></article>`;
+     }).join('');
+   }catch(e){status.textContent='Pencocokan OCR/KFA gagal: '+e.message+'. Pencarian manual KFA tetap bisa digunakan.';}
+   finally{busy=false;}
+ };
+})();
+</script>
+
+</body>
+</html>

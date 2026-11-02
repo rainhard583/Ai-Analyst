@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Upload Gambar | PillScan AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>family=Geist:wght@300;400;500;600;700<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#02040a;--s1:#060912;--s2:#0b0f1e;--s3:#111829;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);
+  --green:#00f5a0;--green2:#00c97e;
+  --red:#ff4d6d;--blue:#4d9fff;--yellow:#ffd166;
+  --text:#f0f4ff;--muted:rgba(240,244,255,.4);--muted2:rgba(240,244,255,.6);
+  --font-h:'Plus Jakarta Sans',sans-serif;--font-b:'Geist','Plus Jakarta Sans',sans-serif;
+  --r:20px;--r-sm:12px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);overflow-x:hidden;min-height:100vh;font-size:16px;line-height:1.6;}
+
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);opacity:.3;}
+.orb1{width:500px;height:500px;background:radial-gradient(circle,rgba(0,245,160,.2),transparent 70%);top:-150px;right:-100px;}
+.orb2{width:400px;height:400px;background:radial-gradient(circle,rgba(77,159,255,.15),transparent 70%);bottom:0;left:-100px;}
+.grid-lines{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:80px 80px;}
+
+/* PAGE TRANSITION */
+.page-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;}
+.pt-curtain{position:absolute;inset:0;background:var(--green);transform:translateY(100%);transform-origin:bottom;}
+.pt-curtain2{position:absolute;inset:0;background:var(--bg);transform:translateY(100%);transform-origin:bottom;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.2rem 3rem;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(2,4,10,.6);backdrop-filter:blur(30px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:#fff;
+  text-decoration:none;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem;}
+.nav-logo-pill{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));
+  display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-logo em{color:var(--green);font-style:normal;}
+.nav-center{display:flex;gap:2rem;list-style:none;}
+.nav-center a{color:var(--muted2);text-decoration:none;font-size:.875rem;font-weight:400;transition:.2s;}
+.nav-center a:hover,.nav-center a.active{color:#fff;}
+.nav-cta{background:var(--green);color:#010c05;font-family:var(--font-h);
+  font-weight:700;font-size:.82rem;padding:.55rem 1.4rem;border-radius:100px;
+  text-decoration:none;transition:all .25s;}
+.nav-cta:hover{background:#fff;box-shadow:0 0 30px rgba(0,245,160,.4);}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;}
+@media(max-width:900px){nav{padding:1rem 1.5rem;}.nav-center{display:none;}.hamburger{display:flex;}}
+.mobile-menu{display:none;position:fixed;top:69px;left:0;right:0;z-index:99;
+  background:rgba(6,9,18,.95);backdrop-filter:blur(30px);
+  border-bottom:1px solid var(--border);padding:1.5rem;}
+.mobile-menu.open{display:block;}
+.mobile-menu a{display:block;padding:.75rem 0;color:var(--muted2);text-decoration:none;
+  font-size:.95rem;border-bottom:1px solid var(--border);transition:.2s;}
+.mobile-menu a:hover{color:var(--green);}
+.mobile-menu a:last-child{border:none;}
+
+/* PAGE HEADER */
+.page-header{position:relative;z-index:1;text-align:center;padding:8rem 2rem 3rem;
+  animation:fadeUp .6s ease both;}
+.page-badge{display:inline-flex;align-items:center;gap:.5rem;
+  background:rgba(0,245,160,.07);border:1px solid rgba(0,245,160,.2);
+  border-radius:100px;padding:.4rem 1.2rem;margin-bottom:1.5rem;
+  font-size:.72rem;color:var(--green);font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+.page-header h1{font-family:var(--font-h);font-size:clamp(1.8rem,3vw,2.6rem);
+  font-weight:800;color:#fff;letter-spacing:-.025em;line-height:1.1;margin-bottom:.8rem;}
+.page-header p{color:var(--muted2);font-size:.95rem;max-width:500px;
+  margin-left:auto;margin-right:auto;line-height:1.8;font-weight:300;}
+
+/* MAIN */
+.main{position:relative;z-index:1;
+  max-width:1100px;margin:0 auto;padding:1.5rem 2rem 6rem;
+  display:grid;grid-template-columns:1.1fr 1fr;gap:1.5rem;align-items:start;}
+@media(max-width:800px){.main{grid-template-columns:1fr;}}
+
+/* CARDS */
+.card{background:rgba(11,15,30,.8);border:1px solid var(--border);
+  border-radius:var(--r);padding:2rem;backdrop-filter:blur(20px);
+  animation:fadeUp .6s .15s ease both;}
+.card-header{display:flex;align-items:center;gap:.6rem;margin-bottom:1.5rem;}
+.card-icon{width:36px;height:36px;border-radius:10px;
+  background:rgba(0,245,160,.1);border:1px solid rgba(0,245,160,.2);
+  display:flex;align-items:center;justify-content:center;font-size:16px;}
+.card-title{font-family:var(--font-h);font-size:.95rem;font-weight:700;color:#fff;}
+
+/* DROPZONE */
+.dropzone{border:1.5px dashed rgba(255,255,255,.12);border-radius:var(--r-sm);
+  padding:3rem 2rem;text-align:center;cursor:pointer;
+  transition:all .3s;background:rgba(255,255,255,.02);position:relative;overflow:hidden;}
+.dropzone::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%,rgba(0,245,160,.05),transparent 60%);
+  opacity:0;transition:.3s;}
+.dropzone:hover{border-color:rgba(0,245,160,.4);background:rgba(0,245,160,.03);}
+.dropzone:hover::before,.dropzone.drag-over::before{opacity:1;}
+.dropzone.drag-over{border-color:var(--green);background:rgba(0,245,160,.05);}
+.dz-icon{font-size:2.5rem;margin-bottom:1rem;display:block;
+  transition:transform .3s;}
+.dropzone:hover .dz-icon{transform:scale(1.1) translateY(-4px);}
+.dz-text{font-size:.9rem;color:var(--muted2);line-height:1.7;}
+.dz-text strong{color:var(--text);font-weight:500;}
+.dz-sub{font-size:.75rem;color:var(--muted);margin-top:.5rem;}
+
+/* PREVIEW */
+.preview-wrap{display:none;margin-top:1.2rem;position:relative;border-radius:var(--r-sm);overflow:hidden;}
+.preview-wrap img{width:100%;display:block;max-height:320px;object-fit:contain;
+  background:rgba(255,255,255,.03);}
+.preview-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+
+/* ACTIONS */
+.action-row{display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap;}
+.btn-detect{flex:1;background:var(--green);color:#010c05;font-family:var(--font-h);
+  font-weight:700;font-size:.88rem;padding:.75rem 1.2rem;border-radius:100px;
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:.4rem;transition:all .25s;position:relative;overflow:hidden;}
+.btn-detect::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  transform:translateX(-100%);transition:.5s;}
+.btn-detect:hover:not(:disabled)::before{transform:translateX(100%);}
+.btn-detect:hover:not(:disabled){box-shadow:0 0 30px rgba(0,245,160,.35);transform:translateY(-1px);}
+.btn-detect:disabled{opacity:.35;cursor:not-allowed;}
+.btn-clear{background:rgba(255,77,109,.08);color:rgba(255,77,109,.8);font-family:var(--font-h);
+  font-weight:600;font-size:.85rem;padding:.75rem 1.2rem;border-radius:100px;
+  border:1px solid rgba(255,77,109,.2);cursor:pointer;transition:all .25s;
+  display:flex;align-items:center;gap:.4rem;}
+.btn-clear:hover{background:rgba(255,77,109,.15);border-color:rgba(255,77,109,.4);}
+
+/* LOADING */
+.loading-bar{display:none;margin-top:1.2rem;}
+.loading-label{font-size:.8rem;color:var(--green);margin-bottom:.5rem;
+  display:flex;align-items:center;gap:.5rem;}
+.loading-dots span{animation:dot-blink 1.4s infinite both;}
+.loading-dots span:nth-child(2){animation-delay:.2s;}
+.loading-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dot-blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+.progress-track{height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--green),var(--blue));
+  animation:loading-anim 1.5s ease-in-out infinite;}
+@keyframes loading-anim{0%{width:0%;margin-left:0}60%{width:70%;margin-left:0}100%{width:10%;margin-left:90%}}
+
+/* TIPS */
+.tips-box{background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:1.2rem;margin-top:1.2rem;}
+.tips-title{font-size:.78rem;font-weight:600;color:var(--text);
+  display:flex;align-items:center;gap:.4rem;margin-bottom:.7rem;}
+.tips-list{list-style:none;display:flex;flex-direction:column;gap:.4rem;}
+.tips-list li{font-size:.8rem;color:var(--muted2);display:flex;gap:.5rem;line-height:1.6;}
+.tips-list li::before{content:'→';color:var(--green);flex-shrink:0;font-weight:700;}
+
+/* RESULT */
+.result-card{background:rgba(11,15,30,.8);border:1px solid var(--border);
+  border-radius:var(--r);padding:2rem;backdrop-filter:blur(20px);
+  display:flex;flex-direction:column;gap:1.2rem;
+  animation:fadeUp .6s .25s ease both;}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:4rem 1.5rem;gap:.8rem;}
+.empty-icon{font-size:2.5rem;opacity:.25;}
+.empty-title{font-family:var(--font-h);font-size:1.05rem;font-weight:700;color:var(--muted2);}
+.empty-sub{font-size:.82rem;color:var(--muted);line-height:1.6;max-width:220px;}
+
+.result-header{display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem 1.3rem;border-radius:var(--r-sm);border:1px solid;}
+.result-header.good{background:rgba(0,245,160,.05);border-color:rgba(0,245,160,.25);}
+.result-header.bad{background:rgba(255,77,109,.05);border-color:rgba(255,77,109,.25);}
+.result-label{font-family:var(--font-h);font-size:1.05rem;font-weight:700;}
+.result-label.good{color:var(--green);}
+.result-label.bad{color:var(--red);}
+.result-badge{font-size:.7rem;font-weight:700;padding:.3rem .9rem;border-radius:100px;
+  text-transform:uppercase;letter-spacing:.06em;}
+.result-badge.good{background:rgba(0,245,160,.12);color:var(--green);border:1px solid rgba(0,245,160,.2);}
+.result-badge.bad{background:rgba(255,77,109,.12);color:var(--red);border:1px solid rgba(255,77,109,.2);}
+
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;}
+.metric-box{background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:.9rem 1rem;}
+.metric-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);margin-bottom:.3rem;font-weight:600;}
+.metric-value{font-family:var(--font-h);font-size:1.1rem;font-weight:700;color:#fff;}
+.metric-value.green{color:var(--green);}
+.metric-value.red{color:var(--red);}
+.metric-value.blue{color:var(--blue);}
+
+.conf-bar-track{height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-top:.5rem;}
+.conf-bar-fill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.23,1,.32,1);}
+.conf-bar-fill.good{background:linear-gradient(90deg,var(--green),var(--blue));}
+.conf-bar-fill.bad{background:linear-gradient(90deg,var(--red),#ff9f43);}
+
+.info-box{background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:1.1rem;}
+.info-title{font-family:var(--font-h);font-size:.85rem;font-weight:700;color:#fff;
+  margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+.info-text{font-size:.83rem;color:var(--muted2);line-height:1.7;}
+
+.rekom-box{background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:1.1rem;}
+.rekom-title{font-family:var(--font-h);font-size:.85rem;font-weight:700;color:#fff;
+  margin-bottom:.7rem;display:flex;align-items:center;gap:.4rem;}
+.rekom-list{list-style:none;display:flex;flex-direction:column;gap:.4rem;}
+.rekom-list li{font-size:.82rem;color:var(--muted2);display:flex;gap:.5rem;line-height:1.6;}
+.rekom-list li::before{content:'→';color:var(--green);flex-shrink:0;font-weight:700;}
+
+.all-detections{background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:1.1rem;}
+.det-title{font-family:var(--font-h);font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.7rem;}
+.det-list{display:flex;flex-direction:column;gap:.5rem;}
+.det-item{display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.04);border-radius:8px;padding:.5rem .9rem;font-size:.8rem;}
+.det-name{color:var(--text);font-weight:500;}
+.det-conf{font-weight:700;font-family:var(--font-h);color:var(--green);}
+.det-conf.bad{color:var(--red);}
+
+.warning-box{background:rgba(255,209,102,.04);border:1px solid rgba(255,209,102,.15);
+  border-radius:var(--r-sm);padding:1rem;}
+.warning-text{font-size:.78rem;color:rgba(255,209,102,.7);line-height:1.65;}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--border);
+  padding:2rem;background:var(--s1);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+.footer-logo{font-family:var(--font-h);font-weight:800;color:#fff;text-decoration:none;
+  font-size:.95rem;letter-spacing:-.02em;
+  background:linear-gradient(90deg,#fff,var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.footer-copy{font-size:.78rem;color:var(--muted);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+</style>
+<link rel="stylesheet" href="theme.css"/>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="grid-lines"></div>
+
+<div class="page-transition" id="pageTransition">
+  <div class="pt-curtain" id="ptCurtain"></div>
+  <div class="pt-curtain2" id="ptCurtain2"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo" data-transition>
+    <svg class="logo-mark" viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><path d="M4 12V7a3 3 0 0 1 3-3h5M24 4h5a3 3 0 0 1 3 3v5M32 24v5a3 3 0 0 1-3 3h-5M12 32H7a3 3 0 0 1-3-3v-5" fill="none" stroke="#2f7bff" stroke-width="2.4" stroke-linecap="round"/><g class="logo-caps" transform="rotate(-45 18 18)"><rect x="8" y="12.5" width="20" height="11" rx="5.5" fill="#fff" stroke="#2f7bff" stroke-width="2"/><path d="M18 12.5h-4.5a5.5 5.5 0 0 0 0 11H18z" fill="#2f7bff"/></g></svg><span class="wm">Pill<b>Scan</b></span>
+  </a>
+  <ul class="nav-center">
+    <li><a href="index.html" data-transition>Home</a></li>
+    <li><a href="upload.html" class="active">Upload Gambar</a></li>
+    <li><a href="camera.html" data-transition>Kamera Deteksi</a></li>
+    <li><a href="index.html#contact" data-transition>Kontak</a></li>
+  </ul>
+  <a href="camera.html" class="nav-cta" data-transition>🎥 Live Camera</a>
+  <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html" data-transition>🏠 Home</a>
+  <a href="upload.html">📷 Upload Gambar</a>
+  <a href="camera.html" data-transition>🎥 Kamera Deteksi</a>
+  <a href="index.html#contact">📬 Kontak</a>
+</div>
+
+<div class="page-header">
+  <div class="page-badge">📷 Upload & Deteksi</div>
+  <h1>Unggah Gambar Obat</h1>
+  <p>Upload foto obat yang ingin diperiksa. AI kami akan menganalisis kondisi obat dalam hitungan detik menggunakan YOLO11n.</p>
+</div>
+
+<div class="main">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📁</div>
+      <div class="card-title">Pilih Gambar</div>
+    </div>
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+      <span class="dz-icon">🖼️</span>
+      <div class="dz-text"><strong>Drag & drop gambar di sini</strong><br/>atau klik untuk memilih file</div>
+      <div class="dz-sub">Format: JPG, PNG, WEBP · Maks. 10MB</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none"/>
+    <div class="preview-wrap" id="previewWrap">
+      <img id="previewImg" src="" alt="Preview"/>
+      <canvas id="overlayCanvas" class="preview-canvas"></canvas>
+    </div>
+    <div class="action-row">
+      <button class="btn-detect" id="detectBtn" disabled onclick="runDetection()">🔍 Deteksi Sekarang</button>
+      <button class="btn-clear" id="clearBtn" style="display:none" onclick="clearAll()">🗑️ Hapus</button>
+    </div>
+    <div class="loading-bar" id="loadingBar">
+      <div class="loading-label">Menganalisis dengan YOLO11n<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="tips-box">
+      <div class="tips-title">💡 Tips untuk Hasil Terbaik</div>
+      <ul class="tips-list">
+        <li>Pastikan pencahayaan cukup dan gambar tidak buram</li>
+        <li>Obat harus terlihat jelas dan terfokus di frame</li>
+        <li>Foto dengan latar belakang kontras warna solid</li>
+        <li>Hindari pantulan cahaya berlebih pada permukaan obat</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="card-header">
+      <div class="card-icon">🔬</div>
+      <div class="card-title">Hasil Diagnosa</div>
+    </div>
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🔬</div>
+      <div class="empty-title">Belum Ada Hasil</div>
+      <div class="empty-sub">Upload gambar obat dan klik "Deteksi Sekarang" untuk memulai analisis AI.</div>
+    </div>
+    <div id="resultContent" style="display:none;flex-direction:column;gap:1rem;">
+      <div class="result-header" id="resultHeader">
+        <div class="result-label" id="resultLabel">—</div>
+        <div class="result-badge" id="resultBadge">—</div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Confidence Score</div>
+          <div class="metric-value green" id="confScore">0%</div>
+          <div class="conf-bar-track"><div class="conf-bar-fill" id="confBar" style="width:0%"></div></div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Waktu Prediksi</div>
+          <div class="metric-value blue" id="predTime">—</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Total Deteksi</div>
+          <div class="metric-value" id="totalDet">—</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Status QC</div>
+          <div class="metric-value" id="statusQC">—</div>
+        </div>
+      </div>
+      <div class="info-box" id="infoBox">
+        <div class="info-title">ℹ️ Tentang Kondisi Obat</div>
+        <div class="info-text" id="infoText">—</div>
+      </div>
+      <div class="rekom-box" id="rekomBox">
+        <div class="rekom-title">🩺 Rekomendasi Tindakan</div>
+        <ul class="rekom-list" id="rekomList"></ul>
+      </div>
+<div class="all-detections" id="allDetWrap" style="display:none;">
+        <button type="button" class="det-toggle" id="detToggle" aria-expanded="false" aria-controls="detList" onclick="const w=document.getElementById('allDetWrap');this.setAttribute('aria-expanded',w.classList.toggle('open'))"><span class="det-title">📊 Semua Deteksi <em id="detCount"></em></span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></span></button>
+        <div class="det-body"><div class="det-list" id="detList"></div></div>
+      </div>
+      <div class="info-box" id="geminiPanel" style="margin-top:1rem;border-color:rgba(77,159,255,.35);">
+        <div class="info-title">✨ Gemini AI — Identifikasi & Informasi Obat</div>
+        <div class="info-text" style="margin-bottom:.8rem;">Setelah deteksi YOLO selesai, Gemini dapat membantu memperkirakan jenis/merek obat, menjelaskan kondisi visual, dan merangkum informasi dosis dari label yang terbaca. Identifikasi dari foto saja tidak selalu akurat.</div>
+        <button type="button" class="btn-detect" id="geminiBtn" onclick="analyzeWithGemini()" style="width:100%;min-height:44px;">✨ Analisis dengan Gemini</button>
+        <div id="geminiLoading" style="display:none;margin-top:.8rem;color:var(--blue);">Gemini sedang menganalisis gambar…</div>
+        <div id="geminiOutput" class="info-text" style="display:none;white-space:pre-wrap;margin-top:1rem;"></div>
+        <div style="font-size:.78rem;color:var(--yellow);margin-top:.8rem;">⚠️ Jangan menentukan atau meminum dosis hanya dari identifikasi gambar AI. Konfirmasikan nama, zat aktif, kekuatan, dan aturan pakai pada kemasan/leaflet atau apoteker. Untuk anak-anak, kehamilan, penyakit tertentu, atau obat resep, konsultasikan tenaga kesehatan.</div>
+      </div>
+      <div class="warning-box">
+        <div class="warning-text">⚠️ <strong>Perhatian:</strong> Hasil ini hanya bersifat informatif dan tidak menggantikan pemeriksaan Quality Control manual oleh tenaga ahli.</div>
+      </div>
+    </div>
+    <div class="info-box" id="aiChatPanel" style="margin-top:1rem;border-color:rgba(77,159,255,.4);">
+      <div class="info-title">💬 Tanya AI tentang foto obat</div>
+      <div class="info-text" style="margin-bottom:.8rem;">Kamu bisa bertanya setelah memilih foto tanpa harus menjalankan deteksi Roboflow terlebih dahulu. Jika deteksi sudah dijalankan, hasilnya ikut dikirim sebagai konteks tambahan.</div>
+      <label for="aiQuestion" style="display:block;margin:.5rem 0;color:var(--muted2);font-size:.86rem;">Tulis pertanyaanmu untuk Gemini AI.</label>
+      <textarea id="aiQuestion" rows="3" maxlength="2000" placeholder="Contoh: Apa yang bisa kamu jelaskan dari foto ini?" style="width:100%;resize:vertical;background:var(--s2);color:var(--text);border:1px solid var(--border2);border-radius:12px;padding:.85rem;font:inherit;outline-color:var(--blue);"></textarea>
+      <button type="button" class="btn-detect" id="aiAskBtn" onclick="askGeminiAboutMedicine()" style="width:100%;min-height:44px;margin-top:.6rem;">💬 Tanya Gemini AI</button>
+      <div id="aiChatLoading" style="display:none;margin-top:.8rem;color:var(--blue);">Gemini sedang menjawab…</div>
+      <div id="aiChatOutput" class="info-text" style="display:none;white-space:pre-wrap;margin-top:1rem;"></div>
+      <div style="font-size:.78rem;color:var(--yellow);margin-top:.8rem;">⚠️ AI dapat salah. Jangan menentukan dosis hanya dari foto pil. Periksa kemasan/leaflet resmi atau tanyakan apoteker.</div>
+    </div>
+  </div>
+</div>
+
+
+<section id="kfaSearchSection" class="med-section">
+  <div class="med-panel">
+    <div class="med-head"><span class="med-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5a4.95 4.95 0 0 1-7-7l9-9a4.95 4.95 0 0 1 7 7zM8.5 8.5l7 7"/></svg></span><div><div class="med-eyebrow">DATABASE OBAT · SATUSEHAT KFA</div><h2>Cari informasi obat</h2></div></div>
+    <p class="med-lead">Cari berdasarkan nama obat, misalnya Paracetamol, Paramex, atau nama zat aktif. Hasil ini membantu pencocokan nama—bukan identifikasi pasti obat dari foto.</p>
+    <form id="kfaSearchForm" class="med-form">
+      <label class="med-search"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="kfaKeyword" type="search" maxlength="120" placeholder="Ketik nama obat…" aria-label="Nama obat yang dicari" /></label>
+      <button id="kfaSearchBtn" type="submit" class="btn-primary med-btn">Cari Obat</button>
+    </form>
+    <div id="kfaSearchStatus" class="med-status" role="status" aria-live="polite" style="display:none"></div>
+    <div id="kfaSearchResults" class="kfa-grid"></div>
+    <p class="med-note">Penting: data katalog tidak membuktikan keaslian, kondisi, atau dosis obat pada gambar. Periksa kemasan/leaflet dan konsultasikan dengan apoteker.</p>
+  </div>
+</section>
+
+
+<script>
+const CONF_THRESHOLD = 0.85;
+let selectedFile = null;
+let lastPredictions = [];
+
+function toggleMenu(){ document.getElementById('mobileMenu').classList.toggle('open'); }
+
+// ── PAGE TRANSITION ──
+function doTransition(href){
+  const c=document.getElementById('ptCurtain'),c2=document.getElementById('ptCurtain2');
+  c.style.transition='transform .45s cubic-bezier(.77,0,.18,1)';
+  c.style.transform='translateY(0)';
+  setTimeout(()=>{c2.style.transition='transform .4s .12s cubic-bezier(.77,0,.18,1)';c2.style.transform='translateY(0)';},50);
+  setTimeout(()=>{window.location.href=href;},600);
+}
+(function(){
+  const c=document.getElementById('ptCurtain'),c2=document.getElementById('ptCurtain2');
+  c.style.transform='translateY(0)';c.style.transition='none';
+  c2.style.transform='translateY(0)';c2.style.transition='none';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    c2.style.transition='transform .5s cubic-bezier(.77,0,.18,1)';
+    c2.style.transform='translateY(-100%)';
+    setTimeout(()=>{c.style.transition='transform .5s .1s cubic-bezier(.77,0,.18,1)';c.style.transform='translateY(-100%)';},80);
+  }));
+})();
+document.querySelectorAll('[data-transition]').forEach(el=>{
+  el.addEventListener('click',e=>{
+    const href=el.getAttribute('href');
+    if(href&&href!='#'&&!href.startsWith('http')){e.preventDefault();doTransition(href);}
+  });
+});
+
+// ── DRAG & DROP ──
+const dz=document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))handleFile(f);});
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+
+function handleFile(file){
+  if(file.size>10*1024*1024){alert('File terlalu besar. Maks 10MB.');return;}
+  selectedFile=file;
+  lastPredictions=[];
+  const chatOut=document.getElementById('aiChatOutput');
+  if(chatOut){chatOut.style.display='none';chatOut.textContent='';}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=document.getElementById('previewImg');
+    img.src=ev.target.result;
+    img.onload=()=>{const canvas=document.getElementById('overlayCanvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;if(lastPredictions.length)drawBoxes(lastPredictions);};
+    document.getElementById('previewWrap').style.display='block';
+    document.getElementById('detectBtn').disabled=false;
+    document.getElementById('clearBtn').style.display='flex';
+    document.getElementById('dropzone').style.display='none';
+    resetResult();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAll(){
+  selectedFile=null;
+  lastPredictions=[];
+  document.getElementById('geminiOutput').style.display='none';
+  document.getElementById('aiChatOutput').style.display='none';
+  document.getElementById('aiChatOutput').textContent='';
+  document.getElementById('geminiBtn').disabled=true;
+  document.getElementById('previewWrap').style.display='none';
+  document.getElementById('dropzone').style.display='block';
+  document.getElementById('detectBtn').disabled=true;
+  document.getElementById('clearBtn').style.display='none';
+  document.getElementById('fileInput').value='';
+  document.getElementById('overlayCanvas').getContext('2d').clearRect(0,0,9999,9999);
+  resetResult();
+}
+
+function resetResult(){
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('resultContent').style.display='none';
+  document.getElementById('loadingBar').style.display='none';
+}
+
+async function runDetection(){
+  if(!selectedFile) return;
+  const startTime=Date.now();
+  document.getElementById('loadingBar').style.display='block';
+  document.getElementById('previewWrap').classList.add('scanning');
+  document.getElementById('detectBtn').disabled=true;
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultContent').style.display='none';
+  try{
+    // Kirim gambar yang sudah dinormalisasi (orientasi EXIF benar, maks 1280px)
+    // agar sistem koordinat prediksi pasti sama dengan gambar yang dikirim.
+    const prepared=await prepareImageForDetection(selectedFile);
+    const res=await fetch('/api/roboflow/detect',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageDataUrl:prepared.dataUrl,confidence:Math.round(CONF_THRESHOLD*100)})
+    });
+    if(!res.ok) throw new Error('API error: '+res.status);
+    const data=await res.json();
+    const elapsed=((Date.now()-startTime)/1000).toFixed(2)+'s';
+    const imgEl=document.getElementById('previewImg');
+    const normalized = normalizePredictions(data.predictions || [], data.image, prepared, imgEl);
+    // Buang objek non-pil (mis. logo/lingkaran biru di kemasan) lalu hapus kotak ganda,
+    // sehingga "Total Deteksi" sama dengan jumlah kotak yang tampil.
+    lastPredictions = suppressDuplicatePredictions(filterNonPillObjects(normalized, imgEl));
+    console.log('[PillScan] sent', prepared.width+'x'+prepared.height, '| roboflow image', data.image, '| natural', imgEl.naturalWidth+'x'+imgEl.naturalHeight, '| preds', lastPredictions.length);
+    drawBoxes(lastPredictions);
+    showResult(lastPredictions,elapsed);
+    // OCR nama/merek dari kemasan lalu cari kandidat di katalog KFA.
+    runAutoKfaOCR(prepared.dataUrl);
+    document.getElementById('geminiBtn').disabled=false;
+  }catch(err){alert('Gagal mendeteksi: '+err.message);console.error(err);}
+  finally{document.getElementById('previewWrap').classList.remove('scanning');document.getElementById('loadingBar').style.display='none';document.getElementById('detectBtn').disabled=false;}
+}
+
+async function analyzeWithGemini(){
+  if(!selectedFile){alert('Pilih gambar obat terlebih dahulu.');return;}
+  const btn=document.getElementById('geminiBtn'),loading=document.getElementById('geminiLoading'),out=document.getElementById('geminiOutput');
+  btn.disabled=true; loading.style.display='block'; out.style.display='none';
+  try{
+    const dataUrl=await toBase64(selectedFile);
+    const response=await fetch('/api/gemini/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageDataUrl:dataUrl,predictions:lastPredictions})});
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||'Gemini API gagal ('+response.status+')');
+    out.textContent=data.analysis||'Gemini tidak memberikan hasil.'; out.style.display='block';
+  }catch(err){out.textContent='Analisis Gemini gagal: '+err.message+'\nPastikan server backend berjalan dan GEMINI_API_KEY sudah diatur pada file .env.';out.style.display='block';}
+  finally{loading.style.display='none';btn.disabled=false;}
+}
+
+async function askGeminiAboutMedicine(){
+  const question=document.getElementById('aiQuestion').value.trim();
+  const btn=document.getElementById('aiAskBtn'),loading=document.getElementById('aiChatLoading'),out=document.getElementById('aiChatOutput');
+  if(!question){out.textContent='Tulis pertanyaan terlebih dahulu.';out.style.display='block';return;}
+  if(!selectedFile){out.textContent='Pilih atau unggah foto obat terlebih dahulu. Kamu tidak perlu menekan Deteksi Sekarang untuk bertanya kepada Gemini.';out.style.display='block';return;}
+  btn.disabled=true;loading.style.display='block';out.style.display='none';
+  try{
+    const imageDataUrl=await toBase64(selectedFile);
+    const response=await fetch('/api/gemini/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,imageDataUrl,predictions:lastPredictions})});
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||'Gemini API gagal ('+response.status+')');
+    out.textContent=data.answer||'Gemini tidak memberikan jawaban.';out.style.display='block';
+  }catch(err){out.textContent='Tanya AI gagal: '+err.message+'\nPastikan server berjalan dan konfigurasi .env sudah benar.';out.style.display='block';}
+  finally{loading.style.display='none';btn.disabled=false;}
+}
+
+
+// Resize + normalisasi orientasi sebelum dikirim ke Roboflow.
+async function prepareImageForDetection(file, maxSide = 1280){
+  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * ratio), h = Math.round(bitmap.height * ratio);
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  if (bitmap.close) bitmap.close();
+  return { dataUrl: c.toDataURL('image/jpeg', 0.92), width: w, height: h };
+}
+
+// Ubah koordinat prediksi (ruang gambar yang diproses Roboflow) ke piksel gambar asli di preview.
+function normalizePredictions(preds, rfImage, sent, imgEl){
+  const refW = Number(rfImage?.width)  || sent.width;
+  const refH = Number(rfImage?.height) || sent.height;
+  const sx = imgEl.naturalWidth  / refW;
+  const sy = imgEl.naturalHeight / refH;
+  return (Array.isArray(preds) ? preds : []).map(p => ({
+    ...p,
+    x: Number(p.x) * sx, y: Number(p.y) * sy,
+    width: Number(p.width) * sx, height: Number(p.height) * sy
+  }));
+}
+
+// Filter warna: model kadang salah mengenali elemen kemasan (mis. lingkaran biru logo Paramex) sebagai pil.
+// Objek dibuang hanya jika (1) warnanya jauh berbeda dari warna umum objek lain DAN (2) dominan biru.
+// Pil yang berubah warna (cokelat/kuning) tidak ikut terbuang, jadi deteksi obat_rusak tetap aman.
+const OUTLIER_COLOR_DIST = 120;
+function filterNonPillObjects(preds, imgEl){
+  if (!Array.isArray(preds) || preds.length < 3 || !imgEl.naturalWidth) return preds;
+  const c = document.createElement('canvas');
+  c.width = imgEl.naturalWidth; c.height = imgEl.naturalHeight;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(imgEl, 0, 0);
+  const colors = preds.map(p => {
+    const w = Math.max(2, Math.round(p.width * 0.5)), h = Math.max(2, Math.round(p.height * 0.5));
+    const x = Math.max(0, Math.min(c.width - w, Math.round(p.x - w / 2)));
+    const y = Math.max(0, Math.min(c.height - h, Math.round(p.y - h / 2)));
+    const d = ctx.getImageData(x, y, w, h).data;
+    let r = 0, g = 0, b = 0, n = d.length / 4;
+    for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+    return [r / n, g / n, b / n];
+  });
+  const median = ch => { const v = colors.map(c => c[ch]).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
+  const med = [median(0), median(1), median(2)];
+  return preds.filter((p, i) => {
+    const [r, g, b] = colors[i];
+    const dist = Math.hypot(r - med[0], g - med[1], b - med[2]);
+    const blueDominant = b > r + 40 && b > g + 20;
+    const reject = dist > OUTLIER_COLOR_DIST && blueDominant;
+    if (reject) console.log('[PillScan] objek non-pil dibuang', { class: p.class, rgb: [r, g, b].map(Math.round) });
+    return !reject;
+  });
+}
+
+function toBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});}
+
+function predictionIoU(a, b) {
+  const ax1 = Number(a.x) - Number(a.width) / 2;
+  const ay1 = Number(a.y) - Number(a.height) / 2;
+  const ax2 = Number(a.x) + Number(a.width) / 2;
+  const ay2 = Number(a.y) + Number(a.height) / 2;
+  const bx1 = Number(b.x) - Number(b.width) / 2;
+  const by1 = Number(b.y) - Number(b.height) / 2;
+  const bx2 = Number(b.x) + Number(b.width) / 2;
+  const by2 = Number(b.y) + Number(b.height) / 2;
+  const iw = Math.max(0, Math.min(ax2, bx2) - Math.max(ax1, bx1));
+  const ih = Math.max(0, Math.min(ay2, by2) - Math.max(ay1, by1));
+  const intersection = iw * ih;
+  const areaA = Math.max(0, ax2 - ax1) * Math.max(0, ay2 - ay1);
+  const areaB = Math.max(0, bx2 - bx1) * Math.max(0, by2 - by1);
+  const union = areaA + areaB - intersection;
+  return union > 0 ? intersection / union : 0;
+}
+
+// Remove duplicate boxes from the same class when they cover nearly the same object.
+// This cleans up overlapping labels but does not change the model's actual accuracy.
+function suppressDuplicatePredictions(preds, iouThreshold = 0.48) {
+  const valid = (Array.isArray(preds) ? preds : []).filter(p => {
+    const vals = [Number(p?.x), Number(p?.y), Number(p?.width), Number(p?.height), Number(p?.confidence)];
+    return vals.every(Number.isFinite) && Number(p.width) > 0 && Number(p.height) > 0;
+  });
+  const sorted = valid.slice().sort((a, b) => Number(b.confidence) - Number(a.confidence));
+  const kept = [];
+  for (const candidate of sorted) {
+    const duplicate = kept.some(existing =>
+      String(existing.class).toLowerCase() === String(candidate.class).toLowerCase() &&
+      predictionIoU(existing, candidate) >= iouThreshold
+    );
+    if (!duplicate) kept.push(candidate);
+  }
+  return kept;
+}
+
+function drawBoxes(preds){
+  const img = document.getElementById('previewImg');
+  const canvas = document.getElementById('overlayCanvas');
+  const wrap = document.getElementById('previewWrap');
+  if (!img || !canvas || !wrap || !img.naturalWidth || !img.naturalHeight) return;
+
+  // Place the overlay exactly over the displayed IMG element, not over an
+  // assumed wrapper size. Roboflow x/y/width/height are center-based source pixels.
+  const imgRect = img.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+  const cssW = imgRect.width;
+  const cssH = imgRect.height;
+  if (!cssW || !cssH) return;
+
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.style.left = `${imgRect.left - wrapRect.left}px`;
+  canvas.style.top = `${imgRect.top - wrapRect.top}px`;
+  canvas.style.width = `${cssW}px`;
+  canvas.style.height = `${cssH}px`;
+  canvas.width = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  // Account for object-fit:contain letterboxing inside the IMG element.
+  const scale = Math.min(cssW / img.naturalWidth, cssH / img.naturalHeight);
+  const renderedW = img.naturalWidth * scale;
+  const renderedH = img.naturalHeight * scale;
+  const offsetX = (cssW - renderedW) / 2;
+  const offsetY = (cssH - renderedH) / 2;
+
+  const cleanedPreds = suppressDuplicatePredictions(preds);
+  cleanedPreds.forEach(p => {
+    const cx = Number(p.x), cy = Number(p.y);
+    const bw = Number(p.width), bh = Number(p.height);
+    const confidence = Number(p.confidence);
+    const x = offsetX + (cx - bw / 2) * scale;
+    const y = offsetY + (cy - bh / 2) * scale;
+    const w = bw * scale;
+    const h = bh * scale;
+    if (x + w <= offsetX || y + h <= offsetY || x >= offsetX + renderedW || y >= offsetY + renderedH) return;
+
+    const className = String(p.class || 'unknown');
+    const isGood = className.toLowerCase() === 'obat_bagus';
+    const color = isGood ? '#0fb98a' : '#f0405f';
+    const confidenceText = Number.isFinite(confidence) ? ` ${Math.round(confidence * 100)}%` : '';
+    const label = `${className}${confidenceText}`;
+    const lineWidth = Math.max(1.5, Math.min(3, cssW / 180));
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.strokeRect(x, y, w, h);
+
+    const fontSize = Math.max(10, Math.min(16, cssW * 0.027));
+    const pad = 4;
+    ctx.font = `700 ${fontSize}px Arial, sans-serif`;
+    const textWidth = ctx.measureText(label).width;
+    const labelW = Math.min(cssW, textWidth + pad * 2);
+    const labelH = fontSize + pad * 2;
+    const labelX = Math.max(offsetX, Math.min(x, offsetX + renderedW - labelW));
+    const labelY = y - labelH >= offsetY ? y - labelH : Math.max(offsetY, y);
+    ctx.fillStyle = color;
+    ctx.fillRect(labelX, labelY, labelW, labelH);
+    ctx.fillStyle = '#ffffff';
+    ctx.textBaseline = 'top';
+    ctx.fillText(label, labelX + pad, labelY + pad, Math.max(1, labelW - pad * 2));
+    ctx.restore();
+  });
+}
+
+window.addEventListener('resize', () => {
+  if (lastPredictions.length && document.getElementById('previewImg').naturalWidth) drawBoxes(lastPredictions);
+});
+if ('ResizeObserver' in window) {
+  const previewObserver = new ResizeObserver(() => {
+    if (lastPredictions.length && document.getElementById('previewImg').naturalWidth) drawBoxes(lastPredictions);
+  });
+  previewObserver.observe(document.getElementById('previewWrap'));
+  previewObserver.observe(document.getElementById('previewImg'));
+}
+function showResult(preds,elapsed){
+  document.getElementById('resultContent').style.display='flex';
+  document.getElementById('resultContent').style.flexDirection='column';
+  document.getElementById('resultContent').style.gap='1rem';
+  const best=preds.length?[...preds].sort((a,b)=>(Number(b.confidence)||0)-(Number(a.confidence)||0))[0]:null;
+  const isGood=best?best.class.toLowerCase().includes('bagus'):null;
+  const conf=best?Math.round(best.confidence*100):0;
+  const hdr=document.getElementById('resultHeader');
+  hdr.className='result-header'+(best?(isGood?' good':' bad'):'');
+  document.getElementById('resultLabel').className='result-label'+(best?(isGood?' good':' bad'):'');
+  document.getElementById('resultLabel').textContent=best?best.class:'Tidak Ada Deteksi';
+  const bdg=document.getElementById('resultBadge');
+  bdg.className='result-badge'+(best?(isGood?' good':' bad'):'');
+  bdg.textContent=best?(isGood?'⚠️ Prediksi: BAGUS':'⚠️ Prediksi: RUSAK'):'Tidak terdeteksi';
+  document.getElementById('confScore').textContent=best?conf+'%':'—';
+  document.getElementById('confScore').className='metric-value '+(best?(isGood?'green':'red'):'');
+  document.getElementById('predTime').textContent=elapsed;
+  document.getElementById('totalDet').textContent=preds.length;
+  document.getElementById('statusQC').textContent=best?(isGood?'Perlu QC manual':'Perlu pemeriksaan'):'Tidak ada objek';
+  document.getElementById('statusQC').className='metric-value '+(best?(isGood?'green':'red'):'');
+  const bar=document.getElementById('confBar');
+  bar.style.width=conf+'%';bar.className='conf-bar-fill '+(isGood?'good':'bad');
+  if(best){
+    const infoMap={'obat_bagus':'Model mengklasifikasikan objek sebagai obat_bagus. Ini merupakan prediksi visual, bukan jaminan bahwa obat bebas cacat atau memenuhi standar QC. Periksa kondisi obat secara manual.',
+    'obat_rusak':'Model mengklasifikasikan objek sebagai obat_rusak. Verifikasi secara manual apakah tampak retak, pecah, berubah warna, atau kerusakan lain sebelum mengambil keputusan QC.'};
+    document.getElementById('infoText').textContent=infoMap[best.class]||`Kelas "${best.class}" terdeteksi dengan confidence ${conf}%.`;
+  }
+  const rekomMap={'obat_bagus':['Lanjutkan ke proses pengemasan','Catat sebagai produk lolos QC','Simpan sesuai prosedur penyimpanan yang berlaku'],
+  'obat_rusak':['Pisahkan dari batch produksi segera','Tandai sebagai produk reject','Laporkan ke tim QC untuk investigasi','Jangan didistribusikan ke konsumen']};
+  const rekomData=best?(rekomMap[best.class]||['Periksa lebih lanjut secara manual']):[];
+  document.getElementById('rekomList').innerHTML=rekomData.map(r=>`<li>${r}</li>`).join('');
+  if(preds.length>1){
+    document.getElementById('allDetWrap').style.display='block';
+    document.getElementById('detCount').textContent='· '+preds.length;document.getElementById('detList').innerHTML=preds.map(p=>{const g=p.class.toLowerCase().includes('bagus');return`<div class="det-item"><span class="det-name">${p.class}</span><span class="det-conf ${g?'':'bad'}">${Math.round(p.confidence*100)}%</span></div>`;}).join('');
+  }else{document.getElementById('allDetWrap').style.display='none';}
+}
+
+// ── SATUSEHAT KFA SEARCH ──
+(function initKfaSearch(){
+  const form=document.getElementById('kfaSearchForm');
+  if(!form) return;
+  const input=document.getElementById('kfaKeyword');
+  const button=document.getElementById('kfaSearchBtn');
+  const status=document.getElementById('kfaSearchStatus');
+  const results=document.getElementById('kfaSearchResults');
+  const esc=(v)=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const first=(...values)=>values.find(v=>v!==undefined&&v!==null&&String(v).trim()!=='')||'—';
+  form.addEventListener('submit',async(e)=>{
+    e.preventDefault();
+    const keyword=input.value.trim();
+    if(!keyword){status.style.display='block';status.textContent='Masukkan nama obat terlebih dahulu.';return;}
+    button.disabled=true;button.textContent='Mencari…';status.style.display='block';status.textContent='Menghubungi database KFA…';results.innerHTML='';
+    try{
+      const response=await fetch('/api/kfa/search?keyword='+encodeURIComponent(keyword),{headers:{'Accept':'application/json'}});
+      const payload=await response.json();
+      if(!response.ok) throw new Error(payload.error||payload.message||('Permintaan gagal ('+response.status+')'));
+      // Respons KFA dibungkus server sebagai payload.data, lalu produk berada di payload.data.items.data.
+      const source=payload?.data;
+      let rows=Array.isArray(payload)?payload:
+        Array.isArray(source?.items?.data)?source.items.data:
+        Array.isArray(source?.items)?source.items:
+        Array.isArray(source?.data)?source.data:
+        Array.isArray(source?.results)?source.results:
+        Array.isArray(payload?.results)?payload.results:
+        Array.isArray(payload?.items)?payload.items:
+        Array.isArray(payload?.products)?payload.products:[];
+      rows=rows.slice().sort((a,b)=>Number(Boolean(b.active))-Number(Boolean(a.active)));
+      if(!rows.length){status.textContent='Tidak ada hasil untuk “'+keyword+'”. Coba nama zat aktif atau ejaan lain.';return;}
+      const total=source?.total??source?.items?.total??payload.total??rows.length;
+      status.textContent='Ditemukan '+total+' data katalog. Menampilkan '+Math.min(rows.length,12)+' hasil teratas.';
+      results.innerHTML=rows.slice(0,12).map(item=>{
+        const name=first(item.name,item.product_name,item.display_name,item.nama_dagang,item.nama,item.term,item.medicine_name,item.product_template?.display_name,item.product_template?.name);
+        const kfa=first(item.kfa_code,item.kfaId,item.id,item.code,item.identifier);
+        const formName=first(item.dosage_form?.name,item.dosage_form,item.dosageForm?.name,item.dosageForm,item.form,item.bentuk_sediaan,item.uom?.name);
+        const ingredients=Array.isArray(item.active_ingredients)?item.active_ingredients.map(x=>typeof x==='string'?x:[first(x.zat_aktif,x.name,x.ingredient,x.substance),x.kekuatan_zat_aktif].filter(v=>v&&v!=='—').join(' ')).join(', '):first(item.active_ingredients,item.active_ingredient,item.activeIngredient,item.zat_aktif);
+        const manufacturer=first(item.manufacturer,item.manufacturer_name,item.manufaktur,item.registrar);
+        const active=item.active===true||String(item.active).toLowerCase()==='true'||String(item.state||'').toLowerCase()==='valid'||String(item.state||'').toLowerCase()==='active';
+        return `<article class="kfa-card"><div class="kfa-card-top"><strong>${esc(name)}</strong><span class="kfa-badge ${active?'ok':'warn'}">${active?'Aktif':'Periksa status'}</span></div><dl class="kfa-meta"><div><dt>Kode KFA</dt><dd>${esc(kfa)}</dd></div><div><dt>Bentuk</dt><dd>${esc(formName)}</dd></div><div><dt>Zat aktif</dt><dd>${esc(ingredients)}</dd></div><div><dt>Produsen</dt><dd>${esc(manufacturer)}</dd></div></dl></article>`;
+      }).join('');
+    }catch(err){status.textContent='Pencarian KFA gagal: '+err.message+'. Pastikan server Node.js berjalan dan endpoint /api/kfa/search tersedia.';}
+    finally{button.disabled=false;button.textContent='Cari Obat';}
+  });
+})();
+
+</script>
+
+<section id="autoKfaOcrPanel" class="med-panel ocr" style="display:none">
+ <div class="med-head"><span class="med-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M8 9h8M8 12.5h8M8 16h5"/></svg></span><div><div class="med-eyebrow">PENGENALAN NAMA OBAT · OCR + SATUSEHAT KFA</div><h3>Hasil pencocokan otomatis</h3></div></div>
+ <p id="autoKfaOcrStatus" class="med-status" role="status" aria-live="polite">Menunggu deteksi obat…</p>
+ <details class="med-details"><summary>Lihat teks OCR mentah (opsional)</summary><div id="autoKfaOcrText"></div></details>
+ <div id="autoKfaOcrMatches" class="kfa-grid"></div>
+ <p class="med-note">Catatan: OCR membaca tulisan pada gambar, bukan memastikan identitas obat. Cocokkan kemasan, zat aktif, dan kode KFA secara manual. Hasil pencocokan dapat keliru.</p>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+(function(){
+ const panel=document.getElementById('autoKfaOcrPanel'); if(!panel) return;
+ const status=document.getElementById('autoKfaOcrStatus'), textEl=document.getElementById('autoKfaOcrText'), matchesEl=document.getElementById('autoKfaOcrMatches');
+ let busy=false, lastOcrKey='';
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function flatten(payload){
+   let d=payload?.data??payload;
+   if(d?.data!==undefined) d=d.data;
+   if(Array.isArray(d)) return d;
+   if(Array.isArray(d?.items?.data)) return d.items.data;
+   if(Array.isArray(d?.items)) return d.items;
+   if(Array.isArray(d?.results)) return d.results;
+   if(Array.isArray(d?.data?.items?.data)) return d.data.items.data;
+   if(Array.isArray(d?.products)) return d.products;
+   return [];
+ }
+ function nameOf(x){return x?.name||x?.product_name||x?.display_name||x?.nama_produk||x?.nama||x?.name_product||'Nama tidak tersedia';}
+ function codeOf(x){return x?.kfa_code||x?.kfaId||x?.id||x?.code||x?.identifier||'—';}
+ function activeOf(x){return x?.active===true||String(x?.active).toLowerCase()==='true'||String(x?.state||'').toLowerCase()==='active';}
+ function displayValue(v){if(v==null||v==='')return '';if(typeof v==='string'||typeof v==='number')return String(v);if(Array.isArray(v))return v.map(displayValue).filter(Boolean).join(', ');if(typeof v==='object')return String(v.name||v.display_name||v.display||v.text||v.value||v.zat_aktif||v.ingredient_name||'');return String(v);}
+ function ingredientsOf(x){let v=x?.active_ingredients||x?.ingredients||x?.zat_aktif||x?.active_ingredient; if(Array.isArray(v)) return v.map(a=>{if(typeof a==='string')return a;const n=displayValue(a?.zat_aktif||a?.name||a?.ingredient_name||a?.ingredient||a?.substance);const strength=displayValue(a?.kekuatan_zat_aktif||a?.strength||a?.strength_value);return [n,strength].filter(Boolean).join(' ')}).filter(Boolean).join(', '); if(typeof v==='object'&&v) return displayValue(v.zat_aktif||v.name||v.display||v.ingredient_name); return displayValue(v);}
+ function formOf(x){return displayValue(x?.dosage_form?.name||x?.dosage_form||x?.dosageForm?.name||x?.dosageForm||x?.form?.name||x?.form||x?.bentuk_sediaan?.name||x?.bentuk_sediaan||x?.uom?.name)||'Tidak tersedia';}
+ function manufacturerOf(x){return displayValue(x?.manufacturer||x?.manufacturer_name||x?.produced_by||x?.produsen||x?.registrar)||'Tidak tersedia';}
+ function ingredientList(x){const v=x?.active_ingredients||x?.ingredients||x?.zat_aktif||x?.active_ingredient;return Array.isArray(v)?v.map(a=>typeof a==='string'?a:displayValue(a?.zat_aktif||a?.name||a?.ingredient_name||a?.ingredient||a?.substance)).filter(Boolean):v?[displayValue(v.zat_aktif||v.name||v.ingredient_name||v)]:[];}
+ function isSingleIngredientParacetamol500(x){const a=ingredientList(x);const raw=x?.active_ingredients||x?.ingredients;const strength=Array.isArray(raw)&&raw.length===1?displayValue(raw[0]?.kekuatan_zat_aktif||raw[0]?.strength):'';return a.length===1&&/paracetamol|parasetamol/i.test(a[0])&&(/500\s*mg/i.test(strength)||/paracetamol\s*500\s*mg/i.test(nameOf(x)));}
+ function isRegularParamex(x){const code=String(codeOf(x)).trim();const n=String(nameOf(x)).toLowerCase();return code==='93011179'||(/^paramex(?:\s|$)/i.test(n)&&!/flu|batuk|nyeri otot|aktif|\bsk\b|extra|pe\b/i.test(n)&&/paracetamol.*250.*propyphenazone.*150/i.test(n));}
+ function doseInfoHtml(x){
+   if(isRegularParamex(x)) return `<section class="dose-card"><strong class="dose-title">Aturan pakai dari produsen — Paramex tablet biasa</strong><p><b>Komposisi per tablet:</b> Paracetamol 250 mg, Propyphenazone 150 mg, Caffeine 50 mg, dan Dexchlorpheniramine maleate 1 mg.</p><p><b>Aturan pakai yang tercantum produsen:</b> dewasa dan anak di atas 12 tahun: 1 tablet, 2–3 kali sehari.</p><p class="dose-warn">Pastikan kemasan benar-benar Paramex tablet biasa dan bukan Paramex Flu & Batuk, PE, Nyeri Otot, SK, atau Aktif. Jangan gunakan informasi ini untuk anak usia 12 tahun ke bawah. Ikuti label kemasan dan konsultasikan kepada apoteker bila ragu.</p><div class="dose-src">Sumber produsen: <a href="https://www.konimex.com/products" target="_blank" rel="noopener noreferrer">Konimex — PARAMEX</a> (Reg. No. DTL 7813003810 A1).</div></section>`;
+   if(!isSingleIngredientParacetamol500(x))return '';
+   return `<section class="dose-card"><strong class="dose-title">Informasi aturan pakai umum — Parasetamol 500 mg tunggal</strong><ul class="dose-list"><li>Gunakan sesuai petunjuk pada kemasan atau leaflet produk yang cocok.</li><li>Jangan menggabungkan dengan obat lain yang juga mengandung parasetamol.</li><li>Untuk anak-anak, gangguan hati/ginjal, kehamilan, atau penggunaan obat lain, tanyakan kepada tenaga kesehatan.</li></ul><div class="dose-src">Panduan umum, bukan resep individual. Pastikan produk benar-benar parasetamol tunggal 500 mg. Sumber: <a href="https://keslan.kemkes.go.id/view_artikel/2988/yuk-mengenal-parasetamol" target="_blank" rel="noopener noreferrer">Kemenkes RI — Mengenal Parasetamol</a></div></section>`;
+ }
+ async function searchKfa(term){
+   const r=await fetch('/api/kfa/search?keyword='+encodeURIComponent(term),{headers:{Accept:'application/json'}});
+   const j=await r.json(); if(!r.ok) throw new Error(j.error||'HTTP '+r.status); return flatten(j);
+ }
+ function candidateTerms(raw){
+   // Prioritaskan nama merek yang terbaca di bagian mana pun; jangan mencari setiap baris OCR yang penuh noise.
+   const text=String(raw||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,' ').toLowerCase();
+   const known=[
+     ['paramex','Paramex'],['bodrex','Bodrex'],['panadol','Panadol'],['procold','Procold'],
+     ['sanmol','Sanmol'],['tempra','Tempra'],['paracetamol','Paracetamol'],['ibuprofen','Ibuprofen'],
+     ['amoxicillin','Amoxicillin'],['cetirizine','Cetirizine'],['antangin','Antangin'],['tolak angin','Tolak Angin']
+   ];
+   const found=known.filter(([needle])=>text.includes(needle)).map(([,label])=>label);
+   if(found.length) return [...new Set(found)].slice(0,2);
+   const lines=String(raw||'').split(/[\r\n]+/).map(s=>s.replace(/[^\p{L}\p{N} +.-]/gu,' ').replace(/\s+/g,' ').trim()).filter(s=>s.length>=5 && s.length<=48);
+   const candidates=[];
+   for(const line of lines){
+     const words=line.split(/\s+/).filter(w=>w.length>=4 && /[A-Za-z]/.test(w) && !/^\d+$/.test(w));
+     if(words.length){const term=words.slice(0,2).join(' ');if(term.length>=5&&!candidates.some(x=>x.toLowerCase()===term.toLowerCase()))candidates.push(term);}
+     if(candidates.length>=2)break;
+   }
+   return candidates;
+ }
+ window.runAutoKfaOCR=async function(imageDataUrl){
+   if(!imageDataUrl||busy||!window.Tesseract){panel.style.display='block';status.textContent=!window.Tesseract?'OCR belum dimuat. Periksa koneksi internet lalu muat ulang halaman.':'OCR sedang berjalan.';return;}
+   const key=imageDataUrl.slice(0,180); if(key===lastOcrKey) return; lastOcrKey=key; busy=true; panel.style.display='block'; matchesEl.innerHTML=''; textEl.textContent='';
+   try{
+     status.textContent='Membaca tulisan pada gambar dengan OCR…';
+     const result=await Tesseract.recognize(imageDataUrl,'eng');
+     const raw=(result?.data?.text||'').trim(); textEl.textContent=raw||'Tidak ada tulisan yang terbaca jelas.';
+     const terms=candidateTerms(raw);
+     if(!terms.length){status.textContent='Tulisan nama obat belum terbaca. Coba foto lebih dekat, terang, dan fokus.';return;}
+     status.textContent='Mencocokkan nama yang paling mungkin: '+terms.join(' · ')+'. Mengabaikan sebagian teks OCR yang berisik.';
+     const all=[];
+     for(const term of terms){try{const items=await searchKfa(term); for(const item of items){const n=nameOf(item);if(n&&n!=='Nama tidak tersedia'&&!all.some(a=>String(codeOf(a))===String(codeOf(item)))) all.push(item);}}catch(e){console.warn('[KFA OCR]',term,e);}}
+     if(!all.length){status.textContent='Teks terbaca, tetapi belum ada kecocokan katalog yang cukup. Gunakan pencarian manual di bagian database KFA.';return;}
+     const normalizedTerms=terms.join(' ').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(Boolean);
+     const score=x=>{const n=nameOf(x).toLowerCase();let v=0;for(const t of normalizedTerms){if(t.length>=4&&n.includes(t))v+=10;}if(activeOf(x))v+=1;return v;};
+     all.sort((a,b)=>score(b)-score(a));
+     const visible=all.filter(x=>score(x)>1).slice(0,6);
+     status.textContent='Ditemukan '+visible.length+' kandidat yang paling relevan dari '+all.length+' hasil katalog. Ini kandidat pencocokan, bukan identifikasi pasti.';
+     const shown=(visible.length?visible:all.slice(0,3));
+     const verifiedDose=shown.find(x=>isRegularParamex(x)||isSingleIngredientParacetamol500(x));
+     matchesEl.innerHTML=(verifiedDose?doseInfoHtml(verifiedDose):'')+shown.map(x=>{
+       const name=nameOf(x), code=codeOf(x), ingredients=ingredientsOf(x)||'Tidak tersedia';
+       const form=formOf(x); const maker=manufacturerOf(x);
+        return `<article class="kfa-card"><div class="kfa-card-top"><strong>${esc(name)}</strong><span class="kfa-badge ${activeOf(x)?'ok':'warn'}">${activeOf(x)?'Aktif':'Periksa status'}</span></div><dl class="kfa-meta"><div><dt>Kode KFA</dt><dd>${esc(code)}</dd></div><div><dt>Bentuk</dt><dd>${esc(form)}</dd></div><div><dt>Zat aktif</dt><dd>${esc(ingredients)}</dd></div><div><dt>Produsen</dt><dd>${esc(maker)}</dd></div></dl></article>`;
+     }).join('');
+   }catch(e){status.textContent='Pencocokan OCR/KFA gagal: '+e.message+'. Pencarian manual KFA tetap bisa digunakan.';}
+   finally{busy=false;}
+ };
+})();
+</script>
+
+<footer>
+  <a href="index.html" class="footer-logo" data-transition>PillScan AI</a>
+  <span class="footer-copy">© 2025 Team PillScan AI · YOLO11n + Roboflow</span>
+</footer>
+</body>
+</html>
